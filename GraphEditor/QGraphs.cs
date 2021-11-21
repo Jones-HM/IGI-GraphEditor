@@ -22,9 +22,9 @@ namespace IGI_GraphEditor
 
             //Graph data.
             QTASK_UPDATE,
-            QTASK_GRAPH_DATA_X,
-            QTASK_GRAPH_DATA_Y,
-            QTASK_GRAPH_DATA_Z,
+            QTASK_GRAPH_TOTAL_NODES,
+            QTASK_GRAPH_MAX_NODES,
+            QTASK_GRAPH_DATA,
 
             //Graph properties in Real64.
             QTASK_MID_OFFSET,
@@ -36,42 +36,25 @@ namespace IGI_GraphEditor
             QTASK_PRECISE_STEP_VAL
         }
 
-        public class Graph
+        public class QGraphData
         {
-            public int x, y, z;
+            private int totalNodes;
+            private int maxNodes;
+            private int data;
 
-            public Graph() { x = y = z = 0; }
-            public Graph(int x)
-            {
-                this.x = x;
-                this.y = this.z = 0;
-            }
-
-            public Graph(int x, int y)
-            {
-                this.x = x;
-                this.y = y;
-                this.z = 0;
-            }
-
-            public Graph(int x, int y, int z)
-            {
-                this.x = x;
-                this.y = y;
-                this.z = z;
-            }
-        };
-
+            public int TotalNodes { get => totalNodes; set => totalNodes = value; }
+            public int MaxNodes { get => maxNodes; set => maxNodes = value; }
+            public int Data { get => data; set => data = value; }
+        }
         public class QTaskGraph
         {
             public Int32 id;
             public string name;
             public string note;
             public Real64 position;
-            public Graph graph;
             public bool update;
             public bool usePrecise;
-            public Int32 graphData;
+            public QGraphData graphData;
             public Double midOffsets;
             public Double topOffsets;
             public Double heightDiff;
@@ -150,29 +133,13 @@ namespace IGI_GraphEditor
                         int nodePosYIndex = nodePosXIndex + 8;
                         int nodePosZIndex = nodePosYIndex + 8;
 
-                        //var nodeX = BitConverter.GetBytes(float.Parse(nodePos.x.ToString("0.0")));
-                        //var nodeY = BitConverter.GetBytes(float.Parse(nodePos.y.ToString("0.0")));
-                        //var nodeZ = BitConverter.GetBytes(float.Parse(nodePos.z.ToString("0.0")));
-
                         var nodeX = BitConverter.GetBytes(nodePos.x);
                         var nodeY = BitConverter.GetBytes(nodePos.y);
                         var nodeZ = BitConverter.GetBytes(nodePos.z);
 
-                        Buffer.BlockCopy(nodeX, 0,graphFileData, nodePosXIndex, 8);
-                        Buffer.BlockCopy(nodeY, 0,graphFileData, nodePosYIndex, 8);
-                        Buffer.BlockCopy(nodeZ, 0,graphFileData, nodePosZIndex, 8);
-
-                        //InsertToByte(ref graphFileData, nodeX, nodePosXIndex);
-                        //InsertToByte(ref graphFileData, nodeY, nodePosYIndex);
-                        //InsertToByte(ref graphFileData, nodeZ, nodePosZIndex);
-
-                        //graphBytes.InsertRange(nodePosXIndex, nodeX);
-                        //graphBytes.InsertRange(nodePosYIndex, nodeY);
-                        //graphBytes.InsertRange(nodePosZIndex, nodeZ);
-
-                        //graphFileData = AddByteToArray(graphFileData, nodeX);
-                        //graphFileData = AddByteToArray(graphFileData, nodeY);
-                        //graphFileData = AddByteToArray(graphFileData, nodeZ);
+                        Buffer.BlockCopy(nodeX, 0, graphFileData, nodePosXIndex, 8);
+                        Buffer.BlockCopy(nodeY, 0, graphFileData, nodePosYIndex, 8);
+                        Buffer.BlockCopy(nodeZ, 0, graphFileData, nodePosZIndex, 8);
 
                         nodeIdFound = true;
                         break;
@@ -184,109 +151,142 @@ namespace IGI_GraphEditor
             return nodeIdFound;
         }
 
-        public static void InsertToByte(ref byte[] bArray, byte[] newByte, int index)
+        internal static string UpdateAiGraphData(int graphId, Real64 graphPos,QGraphData qGraphData)
         {
-            Buffer.BlockCopy(bArray, index, newByte, 0, 8);
-            //for (int i = 0; i < 8; ++i)
-            //{
-            //    try
-            //    {
-            //        bArray[index + i] = newByte[i];
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        bArray[index + i] = 0;
-            //    }
-            //}
+            string qscData = null;
+            try
+            {
+                var qTaskGraph = GetQTaskGraph(graphId);
+                if (qTaskGraph == null) { QUtils.ShowError("QTaskGraph is empty for GraphId#" + graphId); return null; }
+
+                string inputQscPath = QUtils.cfgQscPath + QUtils.gGameLevel + "\\" + QUtils.objectsQsc;
+                qscData = QUtils.LoadFile(inputQscPath);
+
+                var position = graphPos;//qTaskGraph.position;
+                QUtils.AddLog("Human UpdateAiGraphData() called with position : X:" + position.x + " Y: " + position.y + " Z: " + position.z);
+
+                string aiGraphTaskId = "Task_New(" + graphId;
+                int qtaskIndex = qscData.IndexOf(aiGraphTaskId);
+                int newlineIndex = qscData.IndexOf("\n", qtaskIndex);
+                var aiGraphLine = qscData.Slice(qtaskIndex, newlineIndex);
+
+                var endCount = aiGraphLine.Count(o => o == ')');
+
+                string aiGraphTask = "Task_New(" + graphId + ",\"AIGraph\",\"AIGraph Data\"," + position.x + "," + position.y + "," + position.z + "," + qTaskGraph.update.ToString().ToUpperInvariant() + "," + qGraphData.TotalNodes + "," + qGraphData.MaxNodes + "," + qTaskGraph.graphData.Data + "," + qTaskGraph.midOffsets + "," + qTaskGraph.topOffsets + "," + qTaskGraph.heightDiff + "," + qTaskGraph.nodeWidth.ToString("R") + "," + qTaskGraph.groundDist + "," + qTaskGraph.usePrecise.ToString().ToUpperInvariant() + "," + qTaskGraph.preciseStepVal.ToString("R");
+
+                if (endCount == 1)
+                    aiGraphTask += "),";
+                else
+                {
+                    for (int i = 1; i <= endCount; ++i)
+                    {
+                        aiGraphTask += ")";
+                    }
+                    aiGraphTask += ",";
+                }
+
+                qscData = qscData.Remove(qtaskIndex, newlineIndex - qtaskIndex).Insert(qtaskIndex, aiGraphTask);
+            }catch(Exception ex)
+            {
+                QUtils.ShowError("Exception: " + ex.Message ?? ex.StackTrace,"AI-GRAPH Exception");
+            }
+            return qscData;
         }
 
         //Parse the Objects.
         private static List<QTaskGraph> ParseGraphData(string qscData)
         {
-            //Remove all whitespaces.
-            qscData = qscData.Replace("\t", String.Empty);
-            string[] qscDataSplit = qscData.Split('\n');
-
             var qtaskList = new List<QTaskGraph>();
-            foreach (var data in qscDataSplit)
+            try
             {
-                if (data.Contains(QUtils.taskNew))
+                //Remove all whitespaces.
+                qscData = qscData.Replace("\t", String.Empty);
+                string[] qscDataSplit = qscData.Split('\n');
+
+                
+                foreach (var data in qscDataSplit)
                 {
-                    var startIndex = data.IndexOf(',') + 1;
-                    var endIndex = data.IndexOf(',', startIndex);
-                    var taskName = data.Slice(startIndex, endIndex).Trim().Replace("\"", String.Empty);
-
-                    if (taskName.Contains(QUtils.aiGraphTask))
+                    if (data.Contains(QUtils.taskNew))
                     {
-                        var qtask = new QTaskGraph();
-                        Real64 position = new Real64();
-                        Graph graph = new Graph();
+                        var startIndex = data.IndexOf(',') + 1;
+                        var endIndex = data.IndexOf(',', startIndex);
+                        var taskName = data.Slice(startIndex, endIndex).Trim().Replace("\"", String.Empty);
 
-                        string[] taskNew = data.Split(',');
-                        int taskIndex = 0;
-
-                        foreach (var task in taskNew)
+                        if (taskName.Contains(QUtils.aiGraphTask))
                         {
-                            if (taskIndex == (int)QTASKINFO.QTASK_ID)
+                            var qtask = new QTaskGraph();
+                            var position = new Real64();
+                            var qGraphData = new QGraphData();
+
+                            string[] taskNew = data.Split(',');
+                            int taskIndex = 0;
+
+                            foreach (var task in taskNew)
                             {
-                                var taskId = task.Substring(task.IndexOf('(') + 1);
-                                qtask.id = Convert.ToInt32(taskId);
+                                if (taskIndex == (int)QTASKINFO.QTASK_ID)
+                                {
+                                    var taskId = task.Substring(task.IndexOf('(') + 1);
+                                    qtask.id = Convert.ToInt32(taskId);
+                                }
+                                else if (taskIndex == (int)QTASKINFO.QTASK_NAME)
+                                    qtask.name = task.Trim();
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_NOTE)
+                                    qtask.note = task.Trim();
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_POSX)
+                                    position.x = Double.Parse(task);
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_POSY)
+                                    position.y = Double.Parse(task);
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_POSZ)
+                                    position.z = Double.Parse(task);
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_UPDATE)
+                                    qtask.update = Boolean.Parse(task.Trim());
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_GRAPH_TOTAL_NODES)
+                                    qGraphData.TotalNodes = Int32.Parse(task.Trim());
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_GRAPH_MAX_NODES)
+                                    qGraphData.MaxNodes = Int32.Parse(task.Trim());
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_GRAPH_DATA)
+                                    qGraphData.Data = Int32.Parse(task.Trim());
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_MID_OFFSET)
+                                    qtask.midOffsets = Double.Parse(task);
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_TOP_OFFSET)
+                                    qtask.topOffsets = Double.Parse(task);
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_HEIGH_DIFF)
+                                    qtask.heightDiff = Double.Parse(task);
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_NODE_WIDTH)
+                                    qtask.nodeWidth = Double.Parse(task);
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_GROUND_DIST)
+                                    qtask.groundDist = Double.Parse(task);
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_USE_PRECISE)
+                                    qtask.usePrecise = Boolean.Parse(task.Trim());
+
+                                else if (taskIndex == (int)QTASKINFO.QTASK_PRECISE_STEP_VAL)
+                                    qtask.preciseStepVal = Double.Parse(task.Trim().Replace(")", String.Empty));
+
+                                qtask.position = position;
+                                qtask.graphData = qGraphData;
+                                taskIndex++;
                             }
-                            else if (taskIndex == (int)QTASKINFO.QTASK_NAME)
-                                qtask.name = task.Trim();
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_NOTE)
-                                qtask.note = task.Trim();
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_POSX)
-                                position.x = Double.Parse(task);
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_POSY)
-                                position.y = Double.Parse(task);
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_POSZ)
-                                position.z = Double.Parse(task);
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_UPDATE)
-                                qtask.update = Boolean.Parse(task.Trim());
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_GRAPH_DATA_X)
-                                graph.x = Int32.Parse(task.Trim());
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_GRAPH_DATA_Y)
-                                graph.y = Int32.Parse(task.Trim());
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_GRAPH_DATA_Z)
-                                graph.z = Int32.Parse(task.Trim());
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_MID_OFFSET)
-                                qtask.midOffsets = Double.Parse(task);
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_TOP_OFFSET)
-                                qtask.topOffsets = Double.Parse(task);
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_HEIGH_DIFF)
-                                qtask.heightDiff = Double.Parse(task);
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_NODE_WIDTH)
-                                qtask.nodeWidth = Double.Parse(task);
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_GROUND_DIST)
-                                qtask.groundDist = Double.Parse(task);
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_USE_PRECISE)
-                                qtask.usePrecise = Boolean.Parse(task.Trim());
-
-                            else if (taskIndex == (int)QTASKINFO.QTASK_PRECISE_STEP_VAL)
-                                qtask.preciseStepVal = Double.Parse(task.Trim().Replace(")", String.Empty));
-
-                            qtask.position = position;
-                            qtask.graph = graph;
-                            taskIndex++;
+                            qtaskList.Add(qtask);
                         }
-                        qtaskList.Add(qtask);
                     }
                 }
+            }catch(Exception ex)
+            {
+                AddLog("ParseGraphData exception: " + ex.StackTrace);
             }
             return qtaskList;
         }
@@ -339,6 +339,8 @@ namespace IGI_GraphEditor
             QUtils.AddLog("GetGraphArea(): Level: " + QUtils.gGameLevel + " graphFile: " + graphFile + " retured Area count: " + graphAreas.Count);
             return graphAreas;
         }
+
+
         internal static List<int> GetNodesForGraph(int graphId)
         {
             List<int> graphNodeIds = new List<int>();
@@ -365,15 +367,31 @@ namespace IGI_GraphEditor
         internal static List<QTaskGraph> GetQTaskGraphList(bool sorted = false, bool fromBackup = false, int level = -1)
         {
             //For current level.
-            //if (level == -1) level = QMemory.GetCurrentLevel();
+            if (level == -1) level = QMemory.GetCurrentLevel();
+            level = (level == 0) ? 1 : level;
 
-            //string inputQscPath = QUtils.cfgQscPath + level + "\\" + QUtils.objectsQsc;
-            //string qscData = fromBackup ? QUtils.LoadFile(inputQscPath) : QUtils.LoadFile();
-            var qscData = File.ReadAllText(QUtils.qscData);
+            string inputQscPath = QUtils.cfgQscPath + level + "\\" + QUtils.objectsQsc;
+            QUtils.AddLog("GetQTaskGraphList() : called with level : " + level + " backup : " + fromBackup);
+            string qscData = fromBackup ? QUtils.LoadFile(inputQscPath) : QUtils.LoadFile();
+
             var qtaskList = ParseGraphData(qscData);
 
             if (sorted) qtaskList = qtaskList.OrderBy(q => q.id).ToList();
+            QUtils.gGameLevel = level;
             return qtaskList;
+        }
+
+        internal static QTaskGraph GetQTaskGraph(int graphId)
+        {
+            var qGraphList = GetQTaskGraphList(true, true);
+            var qTaskGraph = new QTaskGraph();
+
+            foreach (var qGraph in qGraphList)
+            {
+                if (qGraph.id == graphId)
+                    return qGraph;
+            }
+            return qTaskGraph;
         }
 
         internal static Real64 GetGraphPosition(string graphId)
@@ -393,7 +411,7 @@ namespace IGI_GraphEditor
         }
 
 
-        internal static object GetGraphPosition(int graphId)
+        internal static Real64 GetGraphPosition(int graphId)
         {
             return GetGraphPosition(graphId.ToString());
         }

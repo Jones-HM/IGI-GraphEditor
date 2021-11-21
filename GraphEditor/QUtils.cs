@@ -12,30 +12,53 @@ namespace IGI_GraphEditor
         internal static List<int> aiGraphIdStr = new List<int>();
         internal static List<int> aiGraphNodeIdStr = new List<int>();
         internal static List<GraphNode> graphNodesList = new List<GraphNode>();
-        internal static string aiGraphTask = "AIGraph", qEditor = "QEditor", qscData = null, graphFile = null;
+        internal static string nodeCriteria,inputMissionPath = @"\missions\location0\level",inputQscPath = @"\IGI_QSC",qfilesPath = @"\QFiles",objectsQsc = "objects.qsc", objectsQvm = "objects.qvm", aiGraphTask = "AIGraph", qEditor = "QEditor", qscData = null, graphFile = null, projAppName;
         internal static string qGraphsPath, igiEditorQEdPath, appdataPath, levelGraphsPath, gameGraphsPath;
+        private static string cfgQvmPath;
         internal static int gGameLevel;
         internal static Dictionary<int, string> graphAreas = new Dictionary<int, string>();
         internal static long GAME_MAX_LEVEL = 14;
         internal const string CAPTION_CONFIG_ERR = "Config - Error", CAPTION_FATAL_SYS_ERR = "Fatal sytem - Error", CAPTION_APP_ERR = "Application - Error", CAPTION_COMPILER_ERR = "Compiler - Error", EDITOR_LEVEL_ERR = "EDITOR ERROR";
 
-
-        private static string projAppName, cfgDllPath, keyBase = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths";
         internal static List<string> inputDatPaths;
 
         internal static bool isGamePathSet = false, cfgMultiDll = false, cfgAutoInject = false;
         internal static int cfgDelayDll = 10, cfgGameLevel = 1, IGI1_MAX_LEVEL = 14, IGI2_MAX_LEVEL = 19;
-        internal static string gameAbsPath,appOutPath, cfgGamePath, cfgGameName = "igi", cfgFile, cfgGameMode = "windowed", injectorFile = @"bin\igi-injector-cmd.exe";
-        private static bool gameFound;
-        private static bool appLogs;
-        private static bool gameReset;
-        private static bool editorOnline;
-        private static string logFile;
-        private static string appCurrPath;
+        internal static string cfgQscPath, gameAbsPath,appOutPath, cfgGamePath, cfgGameName = "igi", cfgFile, cfgGameMode = "windowed", injectorFile = @"bin\igi-injector-cmd.exe";
+        internal static bool gameFound = false, appLogs = false, gameReset = false, editorOnline = false;
+        private static string logFile, appCurrPath;
+        internal static float appEditorVersion = 0.3f, viewPortDelta = 10000.0f;
+
         private static QIniParser qIniParser;
         private static IniParser iniParser;
         internal static string PATH_SEC = "PATH", EDITOR_SEC = "EDITOR";
-        private static string cfgGamePathEx = @"\missions\location0\level";
+        private static string inputQvmPath = @"\IGI_QVM",cfgGamePathEx = @"\missions\location0\level";
+
+        internal static string LoadFile()
+        {
+            return LoadFile(objectsQsc);
+        }
+
+        internal static string LoadFile(string fileName)
+        {
+            string data = null;
+            if (File.Exists(fileName))
+                data = File.ReadAllText(fileName);
+            return data;
+        }
+
+        internal static void SaveFile(string data = null, bool appendData = false)
+        {
+            SaveFile(objectsQsc, data, appendData);
+        }
+
+        internal static void SaveFile(string fileName, string data, bool appendData = false)
+        {
+            if (appendData)
+                File.AppendAllText(fileName, data);
+            else
+                File.WriteAllText(fileName, data);
+        }
 
         internal static bool DllRunner(bool dllInject)
         {
@@ -99,6 +122,8 @@ namespace IGI_GraphEditor
             igiEditorQEdPath = appdataPath + Path.DirectorySeparatorChar + qEditor;
             qGraphsPath = igiEditorQEdPath + @"\QGraphs";
             levelGraphsPath = igiEditorQEdPath + @"\LevelGraphs";
+            cfgQvmPath = igiEditorQEdPath + qfilesPath + inputQvmPath + inputMissionPath;
+            cfgQscPath = igiEditorQEdPath + qfilesPath + inputQscPath + inputMissionPath;
             //gGameLevel = QMemory.GetCurrentLevel();
         }
 
@@ -184,6 +209,7 @@ namespace IGI_GraphEditor
 
         internal static void AddLog(string logMsg)
         {
+            if(appLogs)
                 File.AppendAllText("GraphEditor.log", "[" + DateTime.Now.ToString("yyyy-MM-dd - HH:mm:ss") + "] " + logMsg + "\n");
         }
 
@@ -246,6 +272,39 @@ namespace IGI_GraphEditor
             Environment.Exit(1);
         }
 
+        internal static void RestoreLevel(int gameLevel)
+        {
+            if (gameLevel < 0 || gameLevel > GAME_MAX_LEVEL) gameLevel = 1;
+            var gPath = cfgGamePath;
+
+            if (cfgGamePath.Contains(" ")) gPath = cfgGamePath.Replace("\"", String.Empty);
+
+            gPath = cfgGamePath + gameLevel;
+            string outputQvmPath = gPath + "\\" + objectsQvm;
+            string inputQvmPath = cfgQvmPath + gameLevel + "\\" + objectsQvm;
+
+            File.Delete(outputQvmPath);
+            File.Copy(inputQvmPath, outputQvmPath);
+
+            var inFileData = File.ReadAllText(inputQvmPath);
+            var outFileData = File.ReadAllText(outputQvmPath);
+
+            if (inFileData == outFileData)
+                ShowStatusInfo("Restrore of level '" + gameLevel + "' success");
+            else
+                ShowStatusInfo("Error in restroing level : " + gameLevel);
+        }
+
+        internal static void ResetFile(int level)
+        {
+            var inputQscPath = cfgQscPath + level + "\\" + objectsQsc;
+
+            if (File.Exists(objectsQsc)) File.Delete(objectsQsc);
+            File.Copy(inputQscPath, objectsQsc);
+
+            var fileData = QUtils.LoadFile(objectsQsc);
+            File.WriteAllText(objectsQsc, fileData);
+        }
     }
 
     public class Real32

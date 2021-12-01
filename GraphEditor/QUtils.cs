@@ -20,19 +20,37 @@ namespace IGI_GraphEditor
         internal static long GAME_MAX_LEVEL = 14;
         internal const string CAPTION_CONFIG_ERR = "Config - Error", CAPTION_FATAL_SYS_ERR = "Fatal sytem - Error", CAPTION_APP_ERR = "Application - Error", CAPTION_COMPILER_ERR = "Compiler - Error", EDITOR_LEVEL_ERR = "EDITOR ERROR";
 
-        internal static List<string> inputDatPaths;
+        internal static string inputDatPath;
 
         internal static bool isGamePathSet = false, cfgMultiDll = false, cfgAutoInject = false;
         internal static int cfgDelayDll = 10, cfgGameLevel = 1, IGI1_MAX_LEVEL = 14, IGI2_MAX_LEVEL = 19;
         internal static string cfgQscPath, gameAbsPath,appOutPath, cfgGamePath, cfgGameName = "igi", cfgFile, cfgGameMode = "windowed", injectorFile = @"bin\igi-injector-cmd.exe";
         internal static bool gameFound = false, appLogs = false, gameReset = false, editorOnline = false;
         private static string logFile, appCurrPath;
-        internal static float appEditorVersion = 0.3f, viewPortDelta = 10000.0f;
+        internal static float appEditorVersion = 0.3f, viewPortDelta = 3000.0f;
 
         private static QIniParser qIniParser;
         private static IniParser iniParser;
         internal static string PATH_SEC = "PATH", EDITOR_SEC = "EDITOR";
         private static string inputQvmPath = @"\IGI_QVM",cfgGamePathEx = @"\missions\location0\level";
+
+
+        public class QTask
+        {
+            public Int32 id;
+            public string name;
+            public string note;
+            public Real64 position;
+            public Real32 orientation;
+            public string model;
+        };
+
+        public class HTask
+        {
+            public int team;
+            public QTask qtask;
+            public List<string> weaponsList;
+        };
 
         internal static string LoadFile()
         {
@@ -63,14 +81,14 @@ namespace IGI_GraphEditor
         internal static bool DllRunner(bool dllInject)
         {
             bool status;
-            if (inputDatPaths.Count > 0 && inputDatPaths[0].Length > 3)
+            if (inputDatPath.Length > 0 && inputDatPath.Length > 3)
             {
                 bool gameRunning = IsGameRunning();
                 if (gameRunning)
                 {
                     string inputDllPath = "";
 
-                    foreach (var dllName in inputDatPaths)
+                    foreach (var dllName in inputDatPath)
                         inputDllPath += dllName + " ";
 
                     string injectCmd = injectorFile + " -n " + cfgGameName + ".exe" + ((dllInject) ? " -i " : " -e ") + inputDllPath;
@@ -245,6 +263,11 @@ namespace IGI_GraphEditor
             }
         }
 
+        public static DialogResult ShowDialog(string infoMsg, string caption = "INFO")
+        {
+            return MessageBox.Show(infoMsg, caption, MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+        }
+
         internal static void ShowWarning(string warnMsg, string caption = "WARNING")
         {
             MessageBox.Show(warnMsg, caption, MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -307,6 +330,24 @@ namespace IGI_GraphEditor
         }
     }
 
+
+    enum QTASKINFO
+    {
+        QTASK_ID,
+        QTASK_NAME,
+        QTASK_NOTE,
+        //Object pos in Real64x3.
+        QTASK_POSX,
+        QTASK_POSY,
+        QTASK_POSZ,
+        //Object orientation in Real32x9.
+        QTASK_ALPHA,
+        QTASK_BETA,
+        QTASK_GAMMA,
+        //Mode ID in String16
+        QTASK_MODEL,
+    }
+
     public class Real32
     {
         public float alpha, beta, gamma;
@@ -354,6 +395,25 @@ namespace IGI_GraphEditor
             this.x = x;
             this.y = y;
             this.z = z;
+        }
+
+        public Real64 Real64Operator(Real64 real1, Real64 real2,string operatorType)
+        {
+            Real64 real = new Real64();
+
+            if (operatorType == "+")
+            {
+                real.x = real1.x + real2.x;
+                real.y = real1.y + real2.y;
+                real.z = real1.z + real2.z;
+            }
+            else if (operatorType == "-")
+            {
+                real.x = real1.x - real2.x;
+                real.y = real1.y - real2.y;
+                real.z = real1.z - real2.z;
+            }
+            return real;
         }
 
     };

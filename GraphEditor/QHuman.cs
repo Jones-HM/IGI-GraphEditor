@@ -3,11 +3,62 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace IGI_GraphEditor
 {
     class QHuman
     {
+
+        internal static QUtils.HTask GetHumanTaskList(bool fromBackup = false)
+        {
+            //Declare types to store position to qtask.
+            QUtils.HTask htask = new QUtils.HTask();
+            htask.qtask = new QUtils.QTask();
+            htask.weaponsList = new List<string>();
+
+            Real32 orientation = new Real32();
+            Real64 position = new Real64();
+
+            string inputQscPath = QUtils.cfgQscPath + QUtils.gGameLevel + "\\" + QUtils.objectsQsc;
+
+            string qscData = (fromBackup) ? QUtils.LoadFile(inputQscPath) : QUtils.LoadFile();
+
+            if (qscData.IsNonASCII()) qscData = QCryptor.Decrypt(QUtils.objectsQsc);
+
+            string idIndexStr = "Task_New(0";
+            int idIndex = qscData.IndexOf(idIndexStr);
+            string qscTemp = qscData.Substring(idIndex);
+            string[] taskNew = qscTemp.Split(',');
+
+            //Parse all the data.
+            position.x = Double.Parse(taskNew[(int)QTASKINFO.QTASK_POSX]);
+            position.y = Double.Parse(taskNew[(int)QTASKINFO.QTASK_POSY]);
+            position.z = Double.Parse(taskNew[(int)QTASKINFO.QTASK_POSZ]);
+            orientation.alpha = float.Parse(taskNew[(int)QTASKINFO.QTASK_ALPHA]);
+            htask.team = Convert.ToInt32(taskNew[(int)QTASKINFO.QTASK_GAMMA].Trim());
+
+            //Adding position and orientation to qtask.
+            htask.qtask.position = position;
+            htask.qtask.orientation = orientation;
+
+            string weaponRegex = "[A-Z]{6}_[A-Z]{2}_[A-Z0-9]*";
+            var qscSub = qscData.Substring(idIndex).Split('\n');
+            int weaponsIndex = 0;
+            int maxWeapons = 0xA;
+
+            foreach (var data in qscSub)
+            {
+                var matchData = Regex.Match(data, weaponRegex);
+                if (matchData.Success)
+                    htask.weaponsList.Add(matchData.Value);
+
+                //Break after reaching max weapons limit.
+                if (weaponsIndex > maxWeapons) break;
+                weaponsIndex++;
+            }
+            return htask;
+        }
 
         static internal Real32 GetPositionCoord(bool addLog = true)
         {
@@ -53,9 +104,8 @@ namespace IGI_GraphEditor
             var position = new Real64(x, y, z - QMemory.deltaToGround);
             if (addLog)
             {
-                QUtils.AddLog("GetPositionInMeter() : xpos: " + xpos + " ypos: " + ypos + " zpos: " + zpos);
-                QUtils.AddLog("GetPositionInMeter() : x: " + x + " y: " + y + " z: " + z);
-                QUtils.AddLog("GetPositionInMeter() : position: " + position);
+                QUtils.AddLog("GetPositionInMeter() Non-Truncated xpos: " + xpos + " ypos: " + ypos + " zpos: " + zpos);
+                QUtils.AddLog("GetPositionInMeter() Truncated x: " + x + " y: " + y + " z: " + z);
             }
 
             return position;

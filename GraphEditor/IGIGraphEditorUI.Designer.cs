@@ -33,6 +33,7 @@ namespace IGI_GraphEditor
             this.mainPanel = new System.Windows.Forms.Panel();
             this.nodeCriteriaDD = new System.Windows.Forms.ComboBox();
             this.graphPosCb = new System.Windows.Forms.CheckBox();
+            this.playerCurrPosCb = new System.Windows.Forms.CheckBox();
             this.nodeCurrPosCb = new System.Windows.Forms.CheckBox();
             this.overwriteCb = new System.Windows.Forms.CheckBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -51,6 +52,7 @@ namespace IGI_GraphEditor
             this.graphMaxNodesTxt = new System.Windows.Forms.TextBox();
             this.graphTotalNodesTxt = new System.Windows.Forms.TextBox();
             this.maxNodesLbl = new System.Windows.Forms.Label();
+            this.levelLbl = new System.Windows.Forms.Label();
             this.graphTotalNodesLbl = new System.Windows.Forms.Label();
             this.setOutputPathBtn = new System.Windows.Forms.Button();
             this.formMoverPanel = new System.Windows.Forms.Panel();
@@ -59,13 +61,12 @@ namespace IGI_GraphEditor
             this.closeBtn = new System.Windows.Forms.Label();
             this.statusLbl = new System.Windows.Forms.Label();
             this.browseFile = new System.Windows.Forms.Button();
+            this.resetLevelBtn = new System.Windows.Forms.Button();
             this.resetGraphBtn = new System.Windows.Forms.Button();
             this.saveGraphBtn = new System.Windows.Forms.Button();
             this.saveNodeBtn = new System.Windows.Forms.Button();
             this.title_lbl = new System.Windows.Forms.Label();
-            this.resetLevelBtn = new System.Windows.Forms.Button();
-            this.levelLbl = new System.Windows.Forms.Label();
-            this.playerCurrPosCb = new System.Windows.Forms.CheckBox();
+            this.enableLogsCb = new System.Windows.Forms.CheckBox();
             this.mainPanel.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -77,6 +78,7 @@ namespace IGI_GraphEditor
             this.mainPanel.Controls.Add(this.graphPosCb);
             this.mainPanel.Controls.Add(this.playerCurrPosCb);
             this.mainPanel.Controls.Add(this.nodeCurrPosCb);
+            this.mainPanel.Controls.Add(this.enableLogsCb);
             this.mainPanel.Controls.Add(this.overwriteCb);
             this.mainPanel.Controls.Add(this.label1);
             this.mainPanel.Controls.Add(this.graphAreaLbl);
@@ -147,6 +149,20 @@ namespace IGI_GraphEditor
             this.graphPosCb.UseVisualStyleBackColor = true;
             this.graphPosCb.CheckedChanged += new System.EventHandler(this.graphPosCb_CheckedChanged);
             // 
+            // playerCurrPosCb
+            // 
+            this.playerCurrPosCb.AutoSize = true;
+            this.playerCurrPosCb.Font = new System.Drawing.Font("Century Gothic", 9F);
+            this.playerCurrPosCb.ForeColor = System.Drawing.Color.DeepSkyBlue;
+            this.playerCurrPosCb.Location = new System.Drawing.Point(290, 346);
+            this.playerCurrPosCb.Margin = new System.Windows.Forms.Padding(4);
+            this.playerCurrPosCb.Name = "playerCurrPosCb";
+            this.playerCurrPosCb.Size = new System.Drawing.Size(105, 24);
+            this.playerCurrPosCb.TabIndex = 86;
+            this.playerCurrPosCb.Text = "Player Pos";
+            this.playerCurrPosCb.UseVisualStyleBackColor = true;
+            this.playerCurrPosCb.CheckedChanged += new System.EventHandler(this.playerCurrPosCb_CheckedChanged);
+            // 
             // nodeCurrPosCb
             // 
             this.nodeCurrPosCb.AutoSize = true;
@@ -159,7 +175,7 @@ namespace IGI_GraphEditor
             this.nodeCurrPosCb.TabIndex = 86;
             this.nodeCurrPosCb.Text = "Node Pos";
             this.nodeCurrPosCb.UseVisualStyleBackColor = true;
-            this.nodeCurrPosCb.CheckedChanged += new System.EventHandler(this.currPosCb_CheckedChanged);
+            this.nodeCurrPosCb.CheckedChanged += new System.EventHandler(this.nodeCurrPosCb_CheckedChanged);
             // 
             // overwriteCb
             // 
@@ -372,6 +388,18 @@ namespace IGI_GraphEditor
             this.maxNodesLbl.Text = "Max Nodes:";
             this.maxNodesLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // levelLbl
+            // 
+            this.levelLbl.Font = new System.Drawing.Font("Century Gothic", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.levelLbl.ForeColor = System.Drawing.Color.DeepSkyBlue;
+            this.levelLbl.Location = new System.Drawing.Point(541, 36);
+            this.levelLbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.levelLbl.Name = "levelLbl";
+            this.levelLbl.Size = new System.Drawing.Size(103, 25);
+            this.levelLbl.TabIndex = 70;
+            this.levelLbl.Text = "Level:";
+            this.levelLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // graphTotalNodesLbl
             // 
             this.graphTotalNodesLbl.Font = new System.Drawing.Font("Century Gothic", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -391,10 +419,10 @@ namespace IGI_GraphEditor
             this.setOutputPathBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.setOutputPathBtn.Font = new System.Drawing.Font("Century Gothic", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.setOutputPathBtn.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.setOutputPathBtn.Location = new System.Drawing.Point(67, 67);
+            this.setOutputPathBtn.Location = new System.Drawing.Point(62, 67);
             this.setOutputPathBtn.Margin = new System.Windows.Forms.Padding(4);
             this.setOutputPathBtn.Name = "setOutputPathBtn";
-            this.setOutputPathBtn.Size = new System.Drawing.Size(666, 41);
+            this.setOutputPathBtn.Size = new System.Drawing.Size(671, 41);
             this.setOutputPathBtn.TabIndex = 58;
             this.setOutputPathBtn.Text = "Set Output Path";
             this.setOutputPathBtn.UseVisualStyleBackColor = false;
@@ -486,6 +514,22 @@ namespace IGI_GraphEditor
             this.browseFile.UseVisualStyleBackColor = false;
             this.browseFile.Click += new System.EventHandler(this.browseFile_Click);
             // 
+            // resetLevelBtn
+            // 
+            this.resetLevelBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.resetLevelBtn.BackColor = System.Drawing.Color.Transparent;
+            this.resetLevelBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.resetLevelBtn.Font = new System.Drawing.Font("Century Gothic", 11F);
+            this.resetLevelBtn.ForeColor = System.Drawing.Color.Tomato;
+            this.resetLevelBtn.Location = new System.Drawing.Point(599, 406);
+            this.resetLevelBtn.Margin = new System.Windows.Forms.Padding(4);
+            this.resetLevelBtn.Name = "resetLevelBtn";
+            this.resetLevelBtn.Size = new System.Drawing.Size(207, 35);
+            this.resetLevelBtn.TabIndex = 0;
+            this.resetLevelBtn.Text = "Reset Level";
+            this.resetLevelBtn.UseVisualStyleBackColor = false;
+            this.resetLevelBtn.Click += new System.EventHandler(this.resetLevelBtn_Click);
+            // 
             // resetGraphBtn
             // 
             this.resetGraphBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
@@ -542,54 +586,26 @@ namespace IGI_GraphEditor
             this.title_lbl.BackColor = System.Drawing.Color.Transparent;
             this.title_lbl.Font = new System.Drawing.Font("Harrington", 25F, System.Drawing.FontStyle.Bold);
             this.title_lbl.ForeColor = System.Drawing.Color.SkyBlue;
-            this.title_lbl.Location = new System.Drawing.Point(188, 9);
+            this.title_lbl.Location = new System.Drawing.Point(183, 9);
             this.title_lbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.title_lbl.Name = "title_lbl";
-            this.title_lbl.Size = new System.Drawing.Size(373, 50);
+            this.title_lbl.Size = new System.Drawing.Size(361, 50);
             this.title_lbl.TabIndex = 2;
-            this.title_lbl.Text = "I.G.I IGraph Editor";
+            this.title_lbl.Text = "I.G.I Graph Editor";
             // 
-            // resetLevelBtn
+            // enableLogsCb
             // 
-            this.resetLevelBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.resetLevelBtn.BackColor = System.Drawing.Color.Transparent;
-            this.resetLevelBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.resetLevelBtn.Font = new System.Drawing.Font("Century Gothic", 11F);
-            this.resetLevelBtn.ForeColor = System.Drawing.Color.Tomato;
-            this.resetLevelBtn.Location = new System.Drawing.Point(599, 406);
-            this.resetLevelBtn.Margin = new System.Windows.Forms.Padding(4);
-            this.resetLevelBtn.Name = "resetLevelBtn";
-            this.resetLevelBtn.Size = new System.Drawing.Size(207, 35);
-            this.resetLevelBtn.TabIndex = 0;
-            this.resetLevelBtn.Text = "Reset Level";
-            this.resetLevelBtn.UseVisualStyleBackColor = false;
-            this.resetLevelBtn.Click += new System.EventHandler(this.resetLevelBtn_Click);
-            // 
-            // levelLbl
-            // 
-            this.levelLbl.Font = new System.Drawing.Font("Century Gothic", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.levelLbl.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.levelLbl.Location = new System.Drawing.Point(569, 34);
-            this.levelLbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.levelLbl.Name = "levelLbl";
-            this.levelLbl.Size = new System.Drawing.Size(75, 25);
-            this.levelLbl.TabIndex = 70;
-            this.levelLbl.Text = "Level:";
-            this.levelLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // playerCurrPosCb
-            // 
-            this.playerCurrPosCb.AutoSize = true;
-            this.playerCurrPosCb.Font = new System.Drawing.Font("Century Gothic", 9F);
-            this.playerCurrPosCb.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.playerCurrPosCb.Location = new System.Drawing.Point(290, 346);
-            this.playerCurrPosCb.Margin = new System.Windows.Forms.Padding(4);
-            this.playerCurrPosCb.Name = "playerCurrPosCb";
-            this.playerCurrPosCb.Size = new System.Drawing.Size(105, 24);
-            this.playerCurrPosCb.TabIndex = 86;
-            this.playerCurrPosCb.Text = "Player Pos";
-            this.playerCurrPosCb.UseVisualStyleBackColor = true;
-            this.playerCurrPosCb.CheckedChanged += new System.EventHandler(this.currPosCb_CheckedChanged);
+            this.enableLogsCb.AutoSize = true;
+            this.enableLogsCb.Font = new System.Drawing.Font("Century Gothic", 9F);
+            this.enableLogsCb.ForeColor = System.Drawing.Color.DeepSkyBlue;
+            this.enableLogsCb.Location = new System.Drawing.Point(294, 392);
+            this.enableLogsCb.Margin = new System.Windows.Forms.Padding(4);
+            this.enableLogsCb.Name = "enableLogsCb";
+            this.enableLogsCb.Size = new System.Drawing.Size(118, 24);
+            this.enableLogsCb.TabIndex = 86;
+            this.enableLogsCb.Text = "Enable Logs";
+            this.enableLogsCb.UseVisualStyleBackColor = true;
+            this.enableLogsCb.CheckedChanged += new System.EventHandler(this.enableLogsCb_CheckedChanged);
             // 
             // IGIGraphEditorUI
             // 
@@ -645,6 +661,7 @@ namespace IGI_GraphEditor
         private System.Windows.Forms.Button resetLevelBtn;
         private System.Windows.Forms.Label levelLbl;
         private System.Windows.Forms.CheckBox playerCurrPosCb;
+        private System.Windows.Forms.CheckBox enableLogsCb;
     }
 }
 

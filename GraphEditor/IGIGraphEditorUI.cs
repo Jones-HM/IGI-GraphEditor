@@ -26,8 +26,6 @@ namespace IGI_GraphEditor
                 this.MinimizeBox = this.MaximizeBox = false;
                 mainRef = this;
 
-                QUtils.inputDatPaths = new List<string>();
-
                 //Parse config on AppStart.
                 QUtils.AppInit();
 
@@ -38,8 +36,9 @@ namespace IGI_GraphEditor
 
                 if (QUtils.appOutPath.Length > 0) saveGraphBtn.Enabled = saveNodeBtn.Enabled = true;
 
-                //setOutputPathBtn.Enabled = false;
                 statusLbl.Text = "Output: " + Path.GetFullPath(QUtils.appOutPath);
+                enableLogsCb.Checked = QUtils.appLogs;
+
 
                 //Connect to game.
                 QUtils.gameFound = GT.GT_FindGameProcess(QMemory.gameName) != null;
@@ -53,20 +52,38 @@ namespace IGI_GraphEditor
 
         private void LoadGraphNodesData()
         {
-            graphIdTxt.Text = graphId.ToString();
-            graphPos = QGraphs.GetGraphPosition(graphId);
-            var qTaskGraph = QGraphs.GetQTaskGraph(graphId);
+            try
+            {
+                bool levelContinue = true;
+                var currLevel = QMemory.GetCurrentLevel();
+                if (currLevel != QUtils.gGameLevel)
+                {
+                    var showDlg = QUtils.ShowDialog("Game Level " + currLevel + " is running but you have selected Graph Files from Level " + QUtils.gGameLevel + "\nDo you want to continue ?");
+                    levelContinue = showDlg == DialogResult.Yes;
+                }
 
-            QUtils.aiGraphNodeIdStr = QGraphs.GetNodesForGraph(graphId);
-            levelLbl.Text = "Level " + QUtils.gGameLevel.ToString();
+                if (levelContinue)
+                {
+                    graphIdTxt.Text = graphId.ToString();
+                    graphPos = QGraphs.GetGraphPosition(graphId);
+                    var qTaskGraph = QGraphs.GetQTaskGraph(graphId);
 
-            string graphArea = QGraphs.GetGraphArea(graphId);
-            graphAreaLbl.Text = graphArea;
-            graphTotalNodesTxt.Text = qTaskGraph.graphData.TotalNodes.ToString();
-            graphMaxNodesTxt.Text = qTaskGraph.graphData.MaxNodes.ToString();
+                    QUtils.aiGraphNodeIdStr = QGraphs.GetNodesForGraph(graphId);
+                    levelLbl.Text = "Level" + QUtils.gGameLevel.ToString();
 
-            //Update Graph Nodes.
-            UpdateUIComponent(nodeIdDD, QUtils.aiGraphNodeIdStr);
+                    string graphArea = QGraphs.GetGraphArea(graphId);
+                    graphAreaLbl.Text = graphArea;
+                    graphTotalNodesTxt.Text = qTaskGraph.graphData.TotalNodes.ToString();
+                    graphMaxNodesTxt.Text = qTaskGraph.graphData.MaxNodes.ToString();
+
+                    //Update Graph Nodes.
+                    UpdateUIComponent(nodeIdDD, QUtils.aiGraphNodeIdStr);
+                }
+            }
+            catch (Exception ex)
+            {
+                QUtils.AddLog("LoadGraphNodesData() Exception: " + ex.Message ?? ex.StackTrace);
+            }
         }
 
         private void browseFile_Click(object sender, EventArgs e)
@@ -82,7 +99,7 @@ namespace IGI_GraphEditor
             DialogResult resultDlg = fileDlg.ShowDialog();
             if (resultDlg == DialogResult.OK)
             {
-                QUtils.inputDatPaths.Clear();
+                QUtils.inputDatPath = String.Empty;
                 try
                 {
                     foreach (var datFile in fileDlg.FileNames)
@@ -94,7 +111,7 @@ namespace IGI_GraphEditor
                         }
                         else QUtils.gGameLevel = QMemory.GetCurrentLevel();
 
-                        QUtils.inputDatPaths.Add(datFile);
+                        QUtils.inputDatPath = datFile;
                         browseFile.Text = Path.GetFileName(datFile);
                         graphId = Convert.ToInt32(Regex.Match(Path.GetFileName(datFile), @"\d+").Value);
                         QUtils.gameGraphsPath = QUtils.cfgGamePath + QUtils.gGameLevel + @"\graphs\graph" + graphId + ".dat";
@@ -194,17 +211,16 @@ namespace IGI_GraphEditor
         {
             try
             {
-                var outGraphPath = QUtils.appOutPath + Path.GetFileName(QUtils.inputDatPaths[0]);
+                var outGraphPath = QUtils.appOutPath + Path.GetFileName(QUtils.inputDatPath);
                 int node = Convert.ToInt32(nodeIdDD.SelectedItem);
                 var nodePos = new Real64();
                 nodePos.x = float.Parse(nodeXTxt.Text);
                 nodePos.y = float.Parse(nodeYTxt.Text);
                 nodePos.z = float.Parse(nodeZTxt.Text);
 
-                QUtils.AddLog("SaveGraph(): NodeId: " + node + " X:" + nodePos.x + " Y: " + nodePos.y + " Z:" + nodePos.z);
+                QUtils.AddLog("SaveNode(): NodeId: " + node + " X:" + nodePos.x + " Y: " + nodePos.y + " Z:" + nodePos.z);
 
-                var status = QGraphs.WriteGraphNodeData(QUtils.inputDatPaths[0], node, nodePos, outGraphPath);
-
+                var status = QGraphs.WriteGraphNodeData(QUtils.inputDatPath, node, nodePos, QUtils.nodeCriteria, outGraphPath);
 
                 if (status)
                 {
@@ -222,7 +238,11 @@ namespace IGI_GraphEditor
                     nodeCurrPosCb.Checked = false;
                 }
             }
-            catch (Exception) { QUtils.ShowStatusError("Node data saving Error."); }
+            catch (Exception ex)
+            {
+                QUtils.AddLog("SaveNode(): Exception: " + ex.Message ?? ex.StackTrace);
+                QUtils.ShowStatusError("Node data saving Error.");
+            }
         }
 
         private void resetGraphBtn_Click(object sender, EventArgs e)
@@ -241,44 +261,9 @@ namespace IGI_GraphEditor
             catch (Exception) { }
         }
 
-        private void currPosCb_CheckedChanged(object sender, EventArgs e)
-        {
-            if (((CheckBox)sender).Checked && QUtils.inputDatPaths.Count > 0)
-            {
-                if (QUtils.gameFound)
-                {
-                    var currPosMeter = QHuman.GetPositionInMeter();
-
-                    graphPos = QGraphs.GetGraphPosition(graphId);
-
-                    //Convert Node position Single to Double.
-                    var grapNodePos = new Real64();
-                    grapNodePos.x = graphPos.x + graphNode.NodePos.x;
-                    grapNodePos.y = graphPos.y + graphNode.NodePos.y;
-                    grapNodePos.z = graphPos.z + graphNode.NodePos.z;
-
-                    //Get real Node positions.
-                    var realNodePos = new Real64();
-                    realNodePos.x = currPosMeter.x - grapNodePos.x;
-                    realNodePos.y = currPosMeter.y - grapNodePos.y;
-                    realNodePos.z = (currPosMeter.z - grapNodePos.z);
-
-                    nodeXTxt.Text = realNodePos.x.ToString("0.0");
-                    nodeYTxt.Text = realNodePos.y.ToString("0.0");
-                    nodeZTxt.Text = realNodePos.z.ToString("0.0");
-                }
-            }
-            else
-            {
-                nodeXTxt.Text = graphNode.NodePos.x.ToString("0.0");
-                nodeYTxt.Text = graphNode.NodePos.y.ToString("0.0");
-                nodeZTxt.Text = graphNode.NodePos.z.ToString("0.0");
-            }
-        }
-
         private void saveGraphBtn_Click(object sender, EventArgs e)
         {
-                try
+            try
             {
                 var aiGraphPos = new Real64();
                 aiGraphPos.x = float.Parse(nodeXTxt.Text);
@@ -296,7 +281,8 @@ namespace IGI_GraphEditor
                 var outObjectsPath = QUtils.appOutPath + @"\" + QUtils.objectsQsc;
                 if (overwriteCb.Checked)
                 {
-                    if (File.Exists(outObjectsPath))
+                    QUtils.AddLog("SaveGraph() Overwrite: OutQscPath: '" + outObjectsPath + "' OutQvmPath: '" + outputQvmPath + "' ");
+                    if (File.Exists(outObjectsPath) && File.Exists(outputQvmPath))
                     {
                         if (File.Exists(outputQvmPath))
                             File.Delete(outputQvmPath);
@@ -305,7 +291,11 @@ namespace IGI_GraphEditor
                 }
                 QUtils.ShowStatusInfo("Graph data saved.");
             }
-            catch (Exception) { QUtils.ShowStatusError("Graph data saving Error."); }
+            catch (Exception ex)
+            {
+                QUtils.AddLog("SaveGraph(): Exception: " + ex.Message ?? ex.StackTrace);
+                QUtils.ShowStatusError("Graph data saving Error.");
+            }
         }
 
         private void LoadGraphPosData()
@@ -318,9 +308,14 @@ namespace IGI_GraphEditor
 
         private void graphPosCb_CheckedChanged(object sender, EventArgs e)
         {
-            if (((CheckBox)sender).Checked && QUtils.inputDatPaths.Count > 0)
+            if (((CheckBox)sender).Checked && QUtils.inputDatPath.Length > 0)
             {
+                QUtils.AddLog("GraphPosCb(): getting Graph position...");
                 LoadGraphPosData();
+            }
+            else
+            {
+                nodeXTxt.Text = nodeYTxt.Text = nodeZTxt.Text = "";
             }
         }
 
@@ -343,22 +338,109 @@ namespace IGI_GraphEditor
             QUtils.ResetFile(level);
         }
 
+        private void nodeCurrPosCb_CheckedChanged(object sender, EventArgs e)
+        {
+            if (((CheckBox)sender).Checked && QUtils.inputDatPath.Length > 0)
+            {
+                if (QUtils.gameFound)
+                {
+                    QUtils.AddLog("NodePosCb(): getting Node position...");
+
+                    var currPosMeter = QHuman.GetPositionInMeter();
+                    graphPos = QGraphs.GetGraphPosition(graphId);
+
+                    //Convert Node position Single to Double.
+                    var grapNodePos = new Real64().Real64Operator(graphPos, graphNode.NodePos,"+");
+
+                    //Get real Node positions.
+                    var realNodePos = new Real64().Real64Operator(currPosMeter, grapNodePos,"-");
+                    realNodePos.z = realNodePos.z < 0 ? 0.0f : Math.Abs(realNodePos.z);
+
+                    nodeXTxt.Text = realNodePos.x.ToString("0.0");
+                    nodeYTxt.Text = realNodePos.y.ToString("0.0");
+                    nodeZTxt.Text = realNodePos.z.ToString("0.0");
+                }
+            }
+            else
+            {
+                var currPos = QHuman.GetPositionInMeter();
+                var humanPos = QHuman.GetHumanTaskList(true).qtask.position;
+
+                //Get real Node positions.
+                var grapNodePos = new Real64().Real64Operator(humanPos, currPos, "-");
+                //realNodePos.z = realNodePos.z < 0 ? 0.0f : Math.Abs(realNodePos.z);
+
+                //var realNodePos = new Real64();
+                //realNodePos.x = graphPos.x - grapNodePos.x;
+                //realNodePos.y = graphPos.y - grapNodePos.y;
+                //realNodePos.z = graphPos.z - grapNodePos.z;
+
+                nodeXTxt.Text = grapNodePos.x.ToString("R");
+                nodeYTxt.Text = grapNodePos.y.ToString("R");
+                nodeZTxt.Text = grapNodePos.z.ToString("R");
+
+
+                //nodeXTxt.Text = graphNode.NodePos.x.ToString("0.0");
+                //nodeYTxt.Text = graphNode.NodePos.y.ToString("0.0");
+                //nodeZTxt.Text = graphNode.NodePos.z.ToString("0.0");
+            }
+        }
+
+        private void playerCurrPosCb_CheckedChanged(object sender, EventArgs e)
+        {
+            if (((CheckBox)sender).Checked && QUtils.inputDatPath.Length > 0)
+            {
+                if (QUtils.gameFound)
+                {
+                    var currPosMeter = QHuman.GetPositionInMeter();
+                    nodeXTxt.Text = currPosMeter.x.ToString("0.0");
+                    nodeYTxt.Text = currPosMeter.y.ToString("0.0");
+                    nodeZTxt.Text = currPosMeter.z.ToString("0.0");
+                }
+            }
+            else
+            {
+                nodeXTxt.Text = nodeYTxt.Text = nodeZTxt.Text = "";
+            }
+        }
+
+        private void enableLogsCb_CheckedChanged(object sender, EventArgs e)
+        {
+            if (((CheckBox)sender).Checked)
+            {
+                QUtils.appLogs = true;
+                QUtils.ShowStatusInfo("Editor logs enabled...");
+            }
+            else
+            {
+                QUtils.appLogs = false;
+                QUtils.ShowStatusInfo("Editor logs disabled...");
+            }
+        }
+
         private void nodeIdDD_SelectedIndexChanged(object sender, EventArgs e)
         {
-            //Load Node data.
-            if (nodeIdDD.SelectedIndex == -1) nodeIdDD.SelectedIndex = 0;
-            nodeId = QUtils.aiGraphNodeIdStr[nodeIdDD.SelectedIndex];
-            graphNode = QGraphs.GetGraphNodeData(graphId, nodeId);
+            try
+            {
+                //Load Node data.
+                if (nodeIdDD.SelectedIndex == -1) nodeIdDD.SelectedIndex = 0;
+                nodeId = QUtils.aiGraphNodeIdStr[nodeIdDD.SelectedIndex];
+                graphNode = QGraphs.GetGraphNodeData(graphId, nodeId);
 
-            //Setting Node properties.
-            nodeCriteriaDD.Text = graphNode.NodeCriteria;
-            if (graphNode.NodeCriteria.Length == 0)
-                nodeCriteriaDD.SelectedIndex = 0;
+                //Setting Node properties.
+                nodeCriteriaDD.Text = graphNode.NodeCriteria;
+                if (graphNode.NodeCriteria.Length == 0)
+                    nodeCriteriaDD.SelectedIndex = 0;
 
 
-            nodeXTxt.Text = graphNode.NodePos.x.ToString("0.0");
-            nodeYTxt.Text = graphNode.NodePos.y.ToString("0.0");
-            nodeZTxt.Text = graphNode.NodePos.z.ToString("0.0");
+                nodeXTxt.Text = graphNode.NodePos.x.ToString("0.0");
+                nodeYTxt.Text = graphNode.NodePos.y.ToString("0.0");
+                nodeZTxt.Text = graphNode.NodePos.z.ToString("0.0");
+            }
+            catch (Exception ex)
+            {
+                QUtils.AddLog("nodeIdDD_SelectedDD Exception: " + ex.Message ?? ex.StackTrace);
+            }
         }
     }
 }

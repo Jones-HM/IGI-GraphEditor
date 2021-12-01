@@ -50,7 +50,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>injector_265.ico</ApplicationIcon>
+    <ApplicationIcon>app_icon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <PlatformTarget>x86</PlatformTarget>
@@ -90,11 +90,14 @@
     </Compile>
     <Compile Include="MainClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QCryptor.cs" />
     <Compile Include="QGraphs.cs" />
     <Compile Include="QHuman.cs" />
     <Compile Include="QIniParser.cs" />
     <Compile Include="QLibc.cs" />
     <Compile Include="QMemory.cs" />
+    <Compile Include="QSerialize.cs" />
+    <Compile Include="QSerializeLib.cs" />
     <Compile Include="QUtils.cs" />
     <Compile Include="UXLib.cs" />
     <EmbeddedResource Include="IGIGraphEditorUI.resx">
@@ -122,6 +125,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="app_icon.ico" />
     <Content Include="injector_265.ico" />
   </ItemGroup>
   <ItemGroup>

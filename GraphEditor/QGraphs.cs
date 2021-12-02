@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using static IGI_GraphEditor.QUtils;
@@ -46,6 +47,27 @@ namespace IGI_GraphEditor
             public int MaxNodes { get => maxNodes; set => maxNodes = value; }
             public int Data { get => data; set => data = value; }
         }
+
+        public class GraphDat
+        {
+            string item;
+            string signature;
+            string datatype;
+
+            public GraphDat() { }
+
+            public GraphDat(string item, string signature, string datatype)
+            {
+                this.Item = item;
+                this.Signature = signature;
+                this.Datatype = datatype;
+            }
+
+            public string Item { get => item; set => item = value; }
+            public string Signature { get => signature; set => signature = value; }
+            public string Datatype { get => datatype; set => datatype = value; }
+        }
+
         public class QTaskGraph
         {
             public Int32 id;
@@ -62,6 +84,38 @@ namespace IGI_GraphEditor
             public Double groundDist;
             public Double preciseStepVal;
         };
+
+        internal static List<GraphDat> graphDatList = new List<GraphDat>();
+
+        internal static void InitGraphDatList()
+        {
+            graphDatList.Add(new GraphDat("Max Nodes", "04 E6 3A 0D", "Integer"));
+            graphDatList.Add(new GraphDat("Node Id", "04 CE 35 07", "Integer"));
+            graphDatList.Add(new GraphDat("Node Position", "04 95 42 1D", "Real64x3"));
+            graphDatList.Add(new GraphDat("Node Gamma", "04 9C 7E 0F", "Single"));
+            graphDatList.Add(new GraphDat("Node Radius", "04 23 30 14", "Single"));
+            graphDatList.Add(new GraphDat("Node Material", "04 29 B6 1B", "Integer"));
+            graphDatList.Add(new GraphDat("Node Criteria", "04 E5 D3 1B", "Stringx18"));
+            graphDatList.Add(new GraphDat("Graph Edge1", "04 4A 10 09", "Integer"));
+            graphDatList.Add(new GraphDat("Graph Edge2", "04 F6 18 09", "Integer"));
+            graphDatList.Add(new GraphDat("Graph EdgeType", "04 23 A9 0D", "Integer"));
+        }
+
+        internal static GraphDat GetGraphDat(int index)
+        {
+            if (index < 0 || index > graphDatList.Count) return null;
+            else return graphDatList[index];
+        }
+
+        internal static List<string> GetGraphDatItems()
+        {
+            var graphDatItems =  new List<string>();
+
+            foreach (var graphDat in graphDatList)
+                graphDatItems.Add(graphDat.Item);
+
+            return graphDatItems;
+        }
 
         internal static List<GraphNode> ReadGraphNodeData(string graphFile)
         {
@@ -111,7 +165,7 @@ namespace IGI_GraphEditor
 
         internal static bool WriteGraphNodeData(string graphFile, int node, Real64 nodePos, string nodeCriteria, string outPath)
         {
-            QUtils.AddLog("WriteGraphNodeData(): file: '" + graphFile + "' nodeId: " + node + " NodePos X: " + nodePos.x + " NodePos Y: " + nodePos.y + " NodePos Z: " + nodePos.z + " NodeCriteria: " + nodeCriteria + " OutPath: '" + outPath + "'");
+            QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "file: '" + graphFile + "' nodeId: " + node + " NodePos X: " + nodePos.x + " NodePos Y: " + nodePos.y + " NodePos Z: " + nodePos.z + " NodeCriteria: " + nodeCriteria + " OutPath: '" + outPath + "'");
             bool nodeIdFound = false;
             var graphFileData = File.ReadAllBytes(graphFile);
             List<byte> graphBytes = new List<byte>();
@@ -154,14 +208,14 @@ namespace IGI_GraphEditor
                         //Write Node criteria.
                         if (!nodeCriteria.Contains("NONE"))
                         {
-                            QUtils.AddLog("WriteGraphNodeData() Updating NodeCriteria from '" + nodeCriteriaType + "' to '" + nodeCriteria + "'");
+                            QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Updating NodeCriteria from '" + nodeCriteriaType + "' to '" + nodeCriteria + "'");
                             if (nodeCriteriaType.Contains('\0'))
                                 nodeCriteriaTypeLen -= 1;
 
                             if (nodeCriteriaTypeLen != nodeCriteriaLen)
                             {
                                 //QUtils.ShowWarning("NodeCriteria length error for '" + nodeCriteria + "'", "GraphNodeData - ERROR");
-                                QUtils.AddLog("WriteGraphNodeData() NodeCriteria length error Provided Length: " + nodeCriteria.Length + " Expected Length: " + nodeCriteriaType.Length);
+                                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "NodeCriteria length error Provided Length: " + nodeCriteria.Length + " Expected Length: " + nodeCriteriaType.Length);
                                 nodeCriteria += '\0';
                             }
 
@@ -169,10 +223,10 @@ namespace IGI_GraphEditor
                             {
                                 var nodeCriteriaArrr = Encoding.ASCII.GetBytes(nodeCriteria);
                                 Buffer.BlockCopy(nodeCriteriaArrr, 0, graphFileData, nodeCriteriaIndex, nodeCriteriaArrr.Length);
-                                QUtils.AddLog("WriteGraphNodeData() NodeCriteria written...");
+                                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "NodeCriteria written...");
                             }
                         }
-                        else QUtils.AddLog("WriteGraphNodeData() NodeCriteria skipped...");
+                        else QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "NodeCriteria skipped...");
 
                         nodeIdFound = true;
                         break;
@@ -181,11 +235,11 @@ namespace IGI_GraphEditor
             }
             if (nodeIdFound)
             {
-                QUtils.AddLog("WriteGraphNodeData() NodeId found for Writing data...");
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "NodeId found for Writing data...");
                 File.WriteAllBytes(outPath, graphFileData);
             }
             else
-                QUtils.AddLog("WriteGraphNodeData() NodeId not found for Writing");
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "NodeId not found for Writing");
             return nodeIdFound;
         }
 
@@ -199,13 +253,13 @@ namespace IGI_GraphEditor
 
                 string inputQscPath = QUtils.cfgQscPath + QUtils.gGameLevel + "\\" + QUtils.objectsQsc;
                 qscData = QUtils.LoadFile(inputQscPath);
-                QUtils.AddLog("UpdateAiGraphData() :IsNonASCII : " + qscData.IsNonASCII());
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "IsNonASCII : " + qscData.IsNonASCII());
 
                 qscData = qscData.IsNonASCII() ? QCryptor.Decrypt(inputQscPath) : qscData;
 
                 var position = graphPos;//qTaskGraph.position;
-                QUtils.AddLog("UpdateAiGraphData() position : X:" + position.x + " Y: " + position.y + " Z: " + position.z);
-                QUtils.AddLog("UpdateAiGraphData() data : MaxNodes:" + qGraphData.MaxNodes + " TotalNodes: " + qGraphData.TotalNodes + " Data: " + qGraphData.Data);
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "position : X:" + position.x + " Y: " + position.y + " Z: " + position.z);
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "MaxNodes:" + qGraphData.MaxNodes + " TotalNodes: " + qGraphData.TotalNodes + " Data: " + qGraphData.Data);
 
                 string aiGraphTaskId = "Task_New(" + graphId;
                 int qtaskIndex = qscData.IndexOf(aiGraphTaskId);
@@ -216,7 +270,7 @@ namespace IGI_GraphEditor
 
                 string aiGraphTask = "Task_New(" + graphId + ",\"AIGraph\",\"AIGraph Data\"," + position.x + "," + position.y + "," + position.z + "," + qTaskGraph.update.ToString().ToUpperInvariant() + "," + qGraphData.TotalNodes + "," + qGraphData.MaxNodes + "," + qTaskGraph.graphData.Data + "," + qTaskGraph.midOffsets + "," + qTaskGraph.topOffsets + "," + qTaskGraph.heightDiff + "," + qTaskGraph.nodeWidth.ToString("R") + "," + qTaskGraph.groundDist + "," + qTaskGraph.usePrecise.ToString().ToUpperInvariant() + "," + qTaskGraph.preciseStepVal.ToString("R");
 
-                QUtils.AddLog("UpdateAiGraphData() Ai GraphTask line :" + aiGraphTask);
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Ai GraphTask line :" + aiGraphTask);
                 if (endCount == 1)
                     aiGraphTask += "),";
                 else
@@ -232,7 +286,7 @@ namespace IGI_GraphEditor
             }
             catch (Exception ex)
             {
-                QUtils.AddLog("UpdateAiGraphData() Exception: " + ex.Message ?? ex.StackTrace);
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Exception: " + ex.Message ?? ex.StackTrace);
             }
             return qscData;
         }
@@ -331,7 +385,7 @@ namespace IGI_GraphEditor
             }
             catch (Exception ex)
             {
-                AddLog("ParseGraphData exception: " + ex.Message ?? ex.StackTrace);
+                ShowLogException(MethodBase.GetCurrentMethod().Name, ex);
             }
             return qtaskList;
         }
@@ -339,7 +393,7 @@ namespace IGI_GraphEditor
         internal static GraphNode GetGraphNodeData(int graphId, int nodeId)
         {
             string graphFile = QUtils.inputDatPath;
-            QUtils.AddLog("GetGraphNodeData() GraphFile: '" + graphFile + "'");
+            QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "GraphFile: '" + graphFile + "'");
 
             if (QUtils.graphNodesList.Count == 0) QUtils.graphNodesList = QGraphs.ReadGraphNodeData(graphFile);
 
@@ -347,20 +401,20 @@ namespace IGI_GraphEditor
             {
                 if (node.NodeId == nodeId)
                 {
-                    QUtils.AddLog("GetGraphNodeData() returned NodeId: '" + node.NodeId + "'");
+                    QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "returned NodeId: '" + node.NodeId + "'");
                     return node;
                 }
             }
-            QUtils.AddLog("GetGraphNodeData() returned Null");
+            QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "returned Null");
             return null;
         }
 
         internal static string GetGraphArea(int graphId)
         {
 
-            QUtils.graphFile = QUtils.qGraphsPath + "\\" + "graph_area_level" + QUtils.gGameLevel + ".txt";
+            QUtils.graphFile = QUtils.qGraphsPath + @"\Areas\" + "graph_area_level" + QUtils.gGameLevel + ".txt";
             //QUtils.ShowInfo("graphFile: " + graphFile);
-            QUtils.AddLog("GetGraphArea(): Level: " + QUtils.gGameLevel + " graphId: " + graphId + " graphFile: '" + graphFile + "'");
+            QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Level: " + QUtils.gGameLevel + " graphId: " + graphId + " graphFile: '" + graphFile + "'");
             if (!System.IO.File.Exists(graphFile)) { return "Area Not Available."; }
 
             if (QUtils.graphAreas.Count == 0) QUtils.graphAreas = GetGraphAreasList(graphFile);
@@ -385,7 +439,7 @@ namespace IGI_GraphEditor
                 int graphId = Int32.Parse(Regex.Match(graphIdStr, @"\d+").Value);
                 graphAreas.Add(graphId, graphArea);
             }
-            QUtils.AddLog("GetGraphArea(): Level: " + QUtils.gGameLevel + " graphFile: " + graphFile + " retured Area count: " + graphAreas.Count);
+            QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Level: " + QUtils.gGameLevel + " graphFile: " + graphFile + " retured Area count: " + graphAreas.Count);
             return graphAreas;
         }
 
@@ -407,7 +461,7 @@ namespace IGI_GraphEditor
                         graphNodeIds.Add(node.NodeId);
                 }
 
-                QUtils.AddLog("GetNodesForGraph() GraphFile: '" + graphFile + "'" + " NodeId Count: " + graphNodeIds.Count);
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "GraphFile: '" + graphFile + "'" + " NodeId Count: " + graphNodeIds.Count);
             }
 
             return graphNodeIds;
@@ -422,9 +476,9 @@ namespace IGI_GraphEditor
                 level = (level == 0) ? QMemory.GetCurrentLevel() : level;
 
                 string inputQscPath = QUtils.cfgQscPath + level + "\\" + QUtils.objectsQsc;
-                QUtils.AddLog("GetQTaskGraphList() : called with level : " + level + " backup : " + fromBackup + " InputQsc Path '" + inputQscPath + "'");
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "called with level : " + level + " backup : " + fromBackup + " InputQsc Path '" + inputQscPath + "'");
                 string qscData = fromBackup ? QUtils.LoadFile(inputQscPath) : QUtils.LoadFile();
-                QUtils.AddLog("GetQTaskGraphList() :IsNonASCII : " + qscData.IsNonASCII());
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "IsNonASCII : " + qscData.IsNonASCII());
 
                 qscData = qscData.IsNonASCII() ? QCryptor.Decrypt(inputQscPath) : qscData;
                 var qtaskList = ParseGraphData(qscData);
@@ -435,7 +489,7 @@ namespace IGI_GraphEditor
             }
             catch (Exception ex)
             {
-                AddLog("GetQTaskGraphList() Exception: " + ex.Message ?? ex.StackTrace);
+                ShowLogException(MethodBase.GetCurrentMethod().Name, ex);
             }
             return null;
         }
@@ -450,7 +504,7 @@ namespace IGI_GraphEditor
                 {
                     if (qGraph.id == graphId)
                     {
-                        QUtils.AddLog("GetQTaskGraph(): found valid GraphData");
+                        QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "found valid GraphData");
                         return qGraph;
                     }
                 }
@@ -458,9 +512,9 @@ namespace IGI_GraphEditor
             }
             catch (Exception ex)
             {
-                AddLog("GetQTaskGraph() Exception: " + ex.Message ?? ex.StackTrace);
+                ShowLogException(MethodBase.GetCurrentMethod().Name, ex);
             }
-            QUtils.AddLog("GetQTaskGraph(): found invalid GraphData");
+            QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "found invalid GraphData");
             return null;
         }
 

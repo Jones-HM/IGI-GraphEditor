@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 
 namespace IGI_GraphEditor
@@ -37,7 +38,7 @@ namespace IGI_GraphEditor
             }
             catch (Exception ex)
             {
-                QUtils.ShowError(ex.Message);
+                QUtils.ShowLogException(MethodBase.GetCurrentMethod().Name, ex);
             }
             return gameFound;
         }
@@ -48,7 +49,7 @@ namespace IGI_GraphEditor
             {
                 IntPtr levelAddr = (IntPtr)0x00539560;
                 long level = GT.GT_ReadInt(levelAddr);
-                if (level > QUtils.GAME_MAX_LEVEL) QUtils.ShowSystemFatalError("IGI Editor demo limited to only" + QUtils.GAME_MAX_LEVEL + "levels");
+                //if (level > QUtils.GAME_MAX_LEVEL) QUtils.ShowSystemFatalError("IGI Editor demo limited to only" + QUtils.GAME_MAX_LEVEL + "levels");
                 return (int)level;
             }
             catch (Exception ex) { return 1; }
@@ -87,8 +88,8 @@ namespace IGI_GraphEditor
 
             if (addLog)
             {
-                QUtils.AddLog("GetHumanBaseAddress() humanBasePointer 0x" + humanBasePtr);
-                QUtils.AddLog("GetHumanBaseAddress () humanBaseAddress  : 0x" + humanBaseAddr);
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name,"humanBasePointer 0x" + humanBasePtr);
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name,"humanBaseAddress  : 0x" + humanBaseAddr);
             }
             return humanBaseAddr;
         }
@@ -125,9 +126,7 @@ namespace IGI_GraphEditor
             var angleAddrV = humanBaseAddress + 0xBF4;
 
             float angle = GT.GT_ReadFloat(angleAddrH);
-            QUtils.AddLog("GetRealAngle() Address : 0x" + angleAddrH.ToString());
-            QUtils.AddLog("GetRealAngle() Value : " + angle);
-
+            QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Address : 0x" + angleAddrH.ToString() + " Value : " + angle);
             return angle;
         }
 

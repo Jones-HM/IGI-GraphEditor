@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -76,11 +77,7 @@ namespace IGI_GraphEditor
 
             if (addLog)
             {
-                QUtils.AddLog("GetPositionCoord() : posBaseAddr : " + posBaseAddr);
-                QUtils.AddLog("GetPositionCoord() xpos : " + xpos);
-                QUtils.AddLog("GetPositionCoord() ypos : " + ypos);
-                QUtils.AddLog("GetPositionCoord() zpos : " + zpos);
-                QUtils.AddLog("GetPositionCoord() : position: " + position);
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "posBaseAddr:" + posBaseAddr + " xpos : " + xpos + " ypos : " + ypos + " zpos : " + zpos + " position: " + position);
             }
             return position;
         }
@@ -104,8 +101,8 @@ namespace IGI_GraphEditor
             var position = new Real64(x, y, z - QMemory.deltaToGround);
             if (addLog)
             {
-                QUtils.AddLog("GetPositionInMeter() Non-Truncated xpos: " + xpos + " ypos: " + ypos + " zpos: " + zpos);
-                QUtils.AddLog("GetPositionInMeter() Truncated x: " + x + " y: " + y + " z: " + z);
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Non-Truncated xpos: " + xpos + " ypos: " + ypos + " zpos: " + zpos);
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Truncated x: " + x + " y: " + y + " z: " + z);
             }
 
             return position;

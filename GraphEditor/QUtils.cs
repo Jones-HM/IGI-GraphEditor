@@ -12,7 +12,7 @@ namespace IGI_GraphEditor
         internal static List<int> aiGraphIdStr = new List<int>();
         internal static List<int> aiGraphNodeIdStr = new List<int>();
         internal static List<GraphNode> graphNodesList = new List<GraphNode>();
-        internal static string nodeCriteria,inputMissionPath = @"\missions\location0\level",inputQscPath = @"\IGI_QSC",qfilesPath = @"\QFiles",objectsQsc = "objects.qsc", objectsQvm = "objects.qvm", aiGraphTask = "AIGraph", qEditor = "QEditor", qscData = null, graphFile = null, projAppName;
+        internal static string nodeCriteria, inputMissionPath = @"\missions\location0\level", inputQscPath = @"\IGI_QSC", qfilesPath = @"\QFiles", objectsQsc = "objects.qsc", objectsQvm = "objects.qvm", aiGraphTask = "AIGraph", qEditor = "QEditor", qscData = null, graphFile = null, projAppName;
         internal static string qGraphsPath, igiEditorQEdPath, appdataPath, levelGraphsPath, gameGraphsPath;
         private static string cfgQvmPath;
         internal static int gGameLevel;
@@ -22,17 +22,17 @@ namespace IGI_GraphEditor
 
         internal static string inputDatPath;
 
-        internal static bool isGamePathSet = false, cfgMultiDll = false, cfgAutoInject = false;
+        internal static bool gamePathSet = false, cfgMultiDll = false, cfgAutoInject = false;
         internal static int cfgDelayDll = 10, cfgGameLevel = 1, IGI1_MAX_LEVEL = 14, IGI2_MAX_LEVEL = 19;
-        internal static string cfgQscPath, gameAbsPath,appOutPath, cfgGamePath, cfgGameName = "igi", cfgFile, cfgGameMode = "windowed", injectorFile = @"bin\igi-injector-cmd.exe";
-        internal static bool gameFound = false, appLogs = false, gameReset = false, editorOnline = false;
+        internal static string cfgQscPath, gameAbsPath, appOutPath, cfgGamePath, cfgGameName = "igi", cfgFile, cfgGameMode = "windowed", injectorFile = @"bin\igi-injector-cmd.exe";
+        internal static bool gameFound = false, logEnabled = false, gameReset = false, editorOnline = false;
         private static string logFile, appCurrPath;
         internal static float appEditorVersion = 0.3f, viewPortDelta = 3000.0f;
 
         private static QIniParser qIniParser;
         private static IniParser iniParser;
         internal static string PATH_SEC = "PATH", EDITOR_SEC = "EDITOR";
-        private static string inputQvmPath = @"\IGI_QVM",cfgGamePathEx = @"\missions\location0\level";
+        private static string inputQvmPath = @"\IGI_QVM", cfgGamePathEx = @"\missions\location0\level";
 
 
         public class QTask
@@ -142,19 +142,46 @@ namespace IGI_GraphEditor
             levelGraphsPath = igiEditorQEdPath + @"\LevelGraphs";
             cfgQvmPath = igiEditorQEdPath + qfilesPath + inputQvmPath + inputMissionPath;
             cfgQscPath = igiEditorQEdPath + qfilesPath + inputQscPath + inputMissionPath;
+            QUtils.projAppName = AppDomain.CurrentDomain.FriendlyName.Replace(".exe", String.Empty);
+            QUtils.cfgFile = QUtils.projAppName + ".ini";
+            QUtils.logFile = QUtils.projAppName + ".log";
+            QUtils.appCurrPath = Directory.GetCurrentDirectory();
+            qIniParser = new QIniParser(cfgFile);
             //gGameLevel = QMemory.GetCurrentLevel();
+        }
+
+        internal static void ShowGamePathDialog()
+        {
+            OpenFileDialog folderBrowser = new OpenFileDialog();
+            folderBrowser.ValidateNames = false;
+            folderBrowser.CheckFileExists = false;
+            folderBrowser.CheckPathExists = true;
+            folderBrowser.FileName = "Folder Selection.";
+            folderBrowser.Title = "Select Game path";
+
+            if (folderBrowser.ShowDialog() == DialogResult.OK)
+            {
+                gameAbsPath = appOutPath = Path.GetDirectoryName(folderBrowser.FileName) + Path.DirectorySeparatorChar;
+                cfgGamePath = (!String.IsNullOrEmpty(gameAbsPath)) ? (gameAbsPath.Trim() + QMemory.gameName + ".exe") : null;
+                bool status = File.Exists(cfgGamePath);
+
+                if (!status)
+                {
+                    gamePathSet = false;
+                    ShowSystemFatalError("Error occurred while setting game path.");
+                }
+                else
+                {
+                    ShowInfo("Game path was saved successfully.");
+                    gamePathSet = true;
+                }
+            }
         }
 
         internal static void ParseConfig()
         {
             try
             {
-                QUtils.projAppName = AppDomain.CurrentDomain.FriendlyName.Replace(".exe", String.Empty);
-                QUtils.cfgFile = QUtils.projAppName + ".ini";
-                QUtils.logFile = QUtils.projAppName + ".log";
-                QUtils.appCurrPath = Directory.GetCurrentDirectory();
-                qIniParser = new QIniParser(cfgFile);
-
                 if (File.Exists(QUtils.cfgFile))
                 {
                     //Read properties from PATH section.
@@ -167,18 +194,18 @@ namespace IGI_GraphEditor
                     if (!File.Exists(gPath + Path.DirectorySeparatorChar + QMemory.gameName + ".exe"))
                     {
                         QUtils.ShowError("Invalid path selected! Game 'IGI' not found at path '" + gPath + "'", QUtils.CAPTION_FATAL_SYS_ERR);
-                        Environment.Exit(1);
+                        ShowGamePathDialog();//Prompt for Game path on invalid path.
                     }
                     QUtils.gameAbsPath = gPath;
                     QUtils.cfgGamePath = configPath.Trim() + QUtils.cfgGamePathEx;
 
 
-                    QUtils.appLogs = bool.Parse(qIniParser.Read("app_logs", EDITOR_SEC));
+                    QUtils.logEnabled = bool.Parse(qIniParser.Read("app_logs", EDITOR_SEC));
                     QUtils.gameReset = bool.Parse(qIniParser.Read("game_reset", EDITOR_SEC));
                 }
                 else
                 {
-                    ShowWarning("Config file not found in current directory", QUtils.CAPTION_CONFIG_ERR);
+                    //ShowWarning("Config file not found in current directory", QUtils.CAPTION_CONFIG_ERR);
                     QUtils.CreateConfig();
                 }
             }
@@ -220,17 +247,19 @@ namespace IGI_GraphEditor
 
             //Write App properties to config.
             qIniParser.Write("game_reset", gameReset.ToString(), EDITOR_SEC);
-            qIniParser.Write("app_logs", appLogs.ToString(), EDITOR_SEC);
+            qIniParser.Write("app_logs", logEnabled.ToString(), EDITOR_SEC);
 
             if (!gameFound) Environment.Exit(1);
         }
 
-        internal static void AddLog(string logMsg)
+        internal static void AddLog(string methodName, string logMsg)
         {
-            if(appLogs)
-                File.AppendAllText("GraphEditor.log", "[" + DateTime.Now.ToString("yyyy-MM-dd - HH:mm:ss") + "] " + logMsg + "\n");
+            if (logEnabled)
+            {
+                methodName = methodName.Replace("_Click", String.Empty).Replace("_SelectedIndexChanged", String.Empty).Replace("_SelectedValueChanged", String.Empty);
+                File.AppendAllText(logFile, "[" + DateTime.Now.ToString("yyyy-MM-dd - HH:mm:ss") + "] " + methodName + "(): " + logMsg + "\n");
+            }
         }
-
 
 
         internal static void ShowStatusInfo(string text)
@@ -293,6 +322,46 @@ namespace IGI_GraphEditor
         {
             ShowError("Config file has invalid property for '" + keyword + "'", CAPTION_CONFIG_ERR);
             Environment.Exit(1);
+        }
+
+
+        internal static void LogException(string methodName, Exception ex)
+        {
+            methodName = methodName.Replace("_Click", String.Empty).Replace("_SelectedIndexChanged", String.Empty).Replace("_SelectedValueChanged", String.Empty);
+            AddLog(methodName, "Exception MESSAGE: " + ex.Message + "\nREASON: " + ex.StackTrace);
+        }
+
+        internal static void ShowException(string methodName, Exception ex)
+        {
+            ShowError("MESSAGE: " + ex.Message + "\nREASON: " + ex.StackTrace, methodName + " Exception");
+        }
+
+        internal static void ShowLogException(string methodName, Exception ex)
+        {
+            methodName = methodName.Replace("_Click", String.Empty).Replace("_SelectedIndexChanged", String.Empty).Replace("_SelectedValueChanged", String.Empty);
+            //Show and Log exception for method name.
+            ShowException(methodName, ex);
+            LogException(methodName, ex);
+        }
+
+        internal static void ShowLogError(string methodName, string errMsg, string caption = "ERROR")
+        {
+            methodName = methodName.Replace("_Click", String.Empty).Replace("_SelectedIndexChanged", String.Empty).Replace("_SelectedValueChanged", String.Empty);
+            //Show and Log error for method name.
+            ShowError(methodName + "(): " + errMsg, caption);
+            AddLog(methodName, errMsg);
+        }
+
+        internal static void ShowLogStatus(string methodName, string logMsg)
+        {
+            ShowStatusInfo(logMsg);
+            AddLog(methodName, logMsg);
+        }
+
+        internal static void ShowLogInfo(string methodName, string logMsg)
+        {
+            ShowInfo(logMsg);
+            AddLog(methodName, logMsg);
         }
 
         internal static void RestoreLevel(int gameLevel)
@@ -397,7 +466,7 @@ namespace IGI_GraphEditor
             this.z = z;
         }
 
-        public Real64 Real64Operator(Real64 real1, Real64 real2,string operatorType)
+        public Real64 Real64Operator(Real64 real1, Real64 real2, string operatorType)
         {
             Real64 real = new Real64();
 

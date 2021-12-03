@@ -12,7 +12,7 @@ namespace IGI_GraphEditor
         internal static List<int> aiGraphIdStr = new List<int>();
         internal static List<int> aiGraphNodeIdStr = new List<int>();
         internal static List<GraphNode> graphNodesList = new List<GraphNode>();
-        internal static string nodeCriteria, inputMissionPath = @"\missions\location0\level", inputQscPath = @"\IGI_QSC", qfilesPath = @"\QFiles", objectsQsc = "objects.qsc", objectsQvm = "objects.qvm", aiGraphTask = "AIGraph", qEditor = "QEditor", qscData = null, graphFile = null, projAppName;
+        internal static string nodeCriteria, inputMissionPath = @"\missions\location0\level", inputQscPath = @"\IGI_QSC", qfilesPath = @"\QFiles", objectsQsc = "objects.qsc", objectsQvm = "objects.qvm", aiGraphTask = "AIGraph", qEditor = "QEditor", qscData = null, graphAreaFile = null, projAppName;
         internal static string qGraphsPath, igiEditorQEdPath, appdataPath, levelGraphsPath, gameGraphsPath;
         private static string cfgQvmPath;
         internal static int gGameLevel;
@@ -25,7 +25,7 @@ namespace IGI_GraphEditor
         internal static bool gamePathSet = false, cfgMultiDll = false, cfgAutoInject = false;
         internal static int cfgDelayDll = 10, cfgGameLevel = 1, IGI1_MAX_LEVEL = 14, IGI2_MAX_LEVEL = 19;
         internal static string cfgQscPath, gameAbsPath, appOutPath, cfgGamePath, cfgGameName = "igi", cfgFile, cfgGameMode = "windowed", injectorFile = @"bin\igi-injector-cmd.exe";
-        internal static bool gameFound = false, logEnabled = false, gameReset = false, editorOnline = false;
+        internal static bool gameFound = false, logEnabled = false, gameReset = false, editorOnline = false, standalone = true, standardHex = true, graphFileSelected=false;
         private static string logFile, appCurrPath;
         internal static float appEditorVersion = 0.3f, viewPortDelta = 3000.0f;
 
@@ -33,7 +33,6 @@ namespace IGI_GraphEditor
         private static IniParser iniParser;
         internal static string PATH_SEC = "PATH", EDITOR_SEC = "EDITOR";
         private static string inputQvmPath = @"\IGI_QVM", cfgGamePathEx = @"\missions\location0\level";
-
 
         public class QTask
         {
@@ -139,7 +138,7 @@ namespace IGI_GraphEditor
             appdataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             igiEditorQEdPath = appdataPath + Path.DirectorySeparatorChar + qEditor;
             qGraphsPath = igiEditorQEdPath + @"\QGraphs";
-            levelGraphsPath = igiEditorQEdPath + @"\LevelGraphs";
+            levelGraphsPath = qGraphsPath + @"\Graphs";
             cfgQvmPath = igiEditorQEdPath + qfilesPath + inputQvmPath + inputMissionPath;
             cfgQscPath = igiEditorQEdPath + qfilesPath + inputQscPath + inputMissionPath;
             QUtils.projAppName = AppDomain.CurrentDomain.FriendlyName.Replace(".exe", String.Empty);
@@ -202,6 +201,8 @@ namespace IGI_GraphEditor
 
                     QUtils.logEnabled = bool.Parse(qIniParser.Read("app_logs", EDITOR_SEC));
                     QUtils.gameReset = bool.Parse(qIniParser.Read("game_reset", EDITOR_SEC));
+                    QUtils.standalone = bool.Parse(qIniParser.Read("standalone", EDITOR_SEC));
+                    QUtils.standardHex = bool.Parse(qIniParser.Read("standard_hex", EDITOR_SEC));
                 }
                 else
                 {
@@ -248,6 +249,8 @@ namespace IGI_GraphEditor
             //Write App properties to config.
             qIniParser.Write("game_reset", gameReset.ToString(), EDITOR_SEC);
             qIniParser.Write("app_logs", logEnabled.ToString(), EDITOR_SEC);
+            qIniParser.Write("standalone", standalone.ToString(), EDITOR_SEC);
+            qIniParser.Write("standard_hex", standardHex.ToString(), EDITOR_SEC);
 
             if (!gameFound) Environment.Exit(1);
         }
@@ -397,6 +400,27 @@ namespace IGI_GraphEditor
             var fileData = QUtils.LoadFile(objectsQsc);
             File.WriteAllText(objectsQsc, fileData);
         }
+
+        internal static System.Drawing.Color WpfGetDrawingColor(System.Windows.Media.SolidColorBrush br)
+        {
+            return System.Drawing.Color.FromArgb(
+                br.Color.A,
+                br.Color.R,
+                br.Color.G,
+                br.Color.B);
+        }
+
+        internal static System.Windows.Media.Color WpfGetMediaColor(System.Drawing.Color color)
+        {
+            return System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
+        }
+
+        internal static System.Windows.Media.SolidColorBrush WpfGetMediaBrush(System.Drawing.Color color)
+        {
+            var mediaColor = System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
+            return new System.Windows.Media.SolidColorBrush(mediaColor);
+        }
+
     }
 
 

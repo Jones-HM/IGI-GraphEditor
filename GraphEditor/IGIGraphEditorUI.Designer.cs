@@ -31,6 +31,7 @@ namespace IGI_GraphEditor
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(IGIGraphEditorUI));
             this.mainPanel = new System.Windows.Forms.Panel();
+            this.standaloneCb = new System.Windows.Forms.CheckBox();
             this.setOutputPathBtn = new System.Windows.Forms.Button();
             this.browseFile = new System.Windows.Forms.Button();
             this.editorTabs = new System.Windows.Forms.TabControl();
@@ -42,7 +43,6 @@ namespace IGI_GraphEditor
             this.graphPosCb = new System.Windows.Forms.CheckBox();
             this.playerCurrPosCb = new System.Windows.Forms.CheckBox();
             this.nodeCurrPosCb = new System.Windows.Forms.CheckBox();
-            this.enableLogsCb = new System.Windows.Forms.CheckBox();
             this.overwriteCb = new System.Windows.Forms.CheckBox();
             this.label1 = new System.Windows.Forms.Label();
             this.graphAreaLbl = new System.Windows.Forms.TextBox();
@@ -56,17 +56,22 @@ namespace IGI_GraphEditor
             this.nodeCriteriaLbl = new System.Windows.Forms.Label();
             this.nodeIdLbl = new System.Windows.Forms.Label();
             this.graphIdLbl = new System.Windows.Forms.Label();
-            this.graphIdTxt = new System.Windows.Forms.TextBox();
             this.graphMaxNodesTxt = new System.Windows.Forms.TextBox();
             this.graphTotalNodesTxt = new System.Windows.Forms.TextBox();
             this.resetLevelBtn = new System.Windows.Forms.Button();
             this.resetGraphBtn = new System.Windows.Forms.Button();
             this.saveGraphBtn = new System.Windows.Forms.Button();
             this.saveNodeBtn = new System.Windows.Forms.Button();
-            this.hexEditor = new System.Windows.Forms.TabPage();
+            this.graphHexEditor = new System.Windows.Forms.TabPage();
+            this.elementHost = new System.Windows.Forms.Integration.ElementHost();
+            this.hexEditor = new WpfHexaEditor.HexEditor();
+            this.standardHexBoxCb = new System.Windows.Forms.CheckBox();
+            this.graphHexFormatCb = new System.Windows.Forms.CheckBox();
+            this.graphHexResetDataCb = new System.Windows.Forms.CheckBox();
+            this.graphHexSaveBtn = new System.Windows.Forms.Button();
             this.graphHexNodeIdDD = new System.Windows.Forms.ComboBox();
-            this.graphHexMaterialTypeLbl = new System.Windows.Forms.Label();
-            this.graphHexMaterialTypeTxt = new System.Windows.Forms.TextBox();
+            this.graphHexDataLbl = new System.Windows.Forms.Label();
+            this.graphHexDataTxt = new System.Windows.Forms.TextBox();
             this.graphHexDataTypeLbl = new System.Windows.Forms.Label();
             this.graphHexDataTypeTxt = new System.Windows.Forms.TextBox();
             this.graphHexNodeIdLbl = new System.Windows.Forms.Label();
@@ -74,32 +79,33 @@ namespace IGI_GraphEditor
             this.graphHexColorsDD = new System.Windows.Forms.ComboBox();
             this.graphHexItemsDD = new System.Windows.Forms.ComboBox();
             this.graphHexSigTxt = new System.Windows.Forms.TextBox();
-            this.graphHexViewerTxt = new System.Windows.Forms.RichTextBox();
+            this.customHexViewerTxt = new System.Windows.Forms.RichTextBox();
             this.levelLbl = new System.Windows.Forms.Label();
             this.formMoverPanel = new System.Windows.Forms.Panel();
             this.aboutBtn = new System.Windows.Forms.Label();
+            this.enableLogsCb = new System.Windows.Forms.CheckBox();
             this.minimizeBtn = new System.Windows.Forms.Label();
             this.closeBtn = new System.Windows.Forms.Label();
             this.title_lbl = new System.Windows.Forms.Label();
-            this.graphHexFormatCb = new System.Windows.Forms.CheckBox();
-            this.graphHexClearDataCb = new System.Windows.Forms.CheckBox();
-            this.graphHexSaveBtn = new System.Windows.Forms.Button();
             this.mainPanel.SuspendLayout();
             this.editorTabs.SuspendLayout();
             this.graphEditor.SuspendLayout();
-            this.hexEditor.SuspendLayout();
+            this.graphHexEditor.SuspendLayout();
             this.SuspendLayout();
             // 
             // mainPanel
             // 
             this.mainPanel.AllowDrop = true;
             this.mainPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(35)))), ((int)(((byte)(54)))));
+            this.mainPanel.Controls.Add(this.standaloneCb);
+            this.mainPanel.Controls.Add(this.statusLbl);
             this.mainPanel.Controls.Add(this.setOutputPathBtn);
             this.mainPanel.Controls.Add(this.browseFile);
             this.mainPanel.Controls.Add(this.editorTabs);
             this.mainPanel.Controls.Add(this.levelLbl);
             this.mainPanel.Controls.Add(this.formMoverPanel);
             this.mainPanel.Controls.Add(this.aboutBtn);
+            this.mainPanel.Controls.Add(this.enableLogsCb);
             this.mainPanel.Controls.Add(this.minimizeBtn);
             this.mainPanel.Controls.Add(this.closeBtn);
             this.mainPanel.Controls.Add(this.title_lbl);
@@ -109,6 +115,22 @@ namespace IGI_GraphEditor
             this.mainPanel.Name = "mainPanel";
             this.mainPanel.Size = new System.Drawing.Size(1147, 741);
             this.mainPanel.TabIndex = 5;
+            // 
+            // standaloneCb
+            // 
+            this.standaloneCb.AutoSize = true;
+            this.standaloneCb.Checked = true;
+            this.standaloneCb.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.standaloneCb.Font = new System.Drawing.Font("Century Gothic", 9F);
+            this.standaloneCb.ForeColor = System.Drawing.Color.DeepSkyBlue;
+            this.standaloneCb.Location = new System.Drawing.Point(1028, 68);
+            this.standaloneCb.Margin = new System.Windows.Forms.Padding(4);
+            this.standaloneCb.Name = "standaloneCb";
+            this.standaloneCb.Size = new System.Drawing.Size(114, 24);
+            this.standaloneCb.TabIndex = 115;
+            this.standaloneCb.Text = "Standalone";
+            this.standaloneCb.UseVisualStyleBackColor = true;
+            this.standaloneCb.CheckedChanged += new System.EventHandler(this.standaloneCb_CheckedChanged);
             // 
             // setOutputPathBtn
             // 
@@ -145,7 +167,7 @@ namespace IGI_GraphEditor
             // editorTabs
             // 
             this.editorTabs.Controls.Add(this.graphEditor);
-            this.editorTabs.Controls.Add(this.hexEditor);
+            this.editorTabs.Controls.Add(this.graphHexEditor);
             this.editorTabs.Font = new System.Drawing.Font("Century Gothic", 9.75F);
             this.editorTabs.Location = new System.Drawing.Point(0, 123);
             this.editorTabs.Name = "editorTabs";
@@ -158,13 +180,11 @@ namespace IGI_GraphEditor
             // 
             this.graphEditor.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(35)))), ((int)(((byte)(54)))));
             this.graphEditor.Controls.Add(this.maxNodesLbl);
-            this.graphEditor.Controls.Add(this.statusLbl);
             this.graphEditor.Controls.Add(this.graphTotalNodesLbl);
             this.graphEditor.Controls.Add(this.nodeCriteriaDD);
             this.graphEditor.Controls.Add(this.graphPosCb);
             this.graphEditor.Controls.Add(this.playerCurrPosCb);
             this.graphEditor.Controls.Add(this.nodeCurrPosCb);
-            this.graphEditor.Controls.Add(this.enableLogsCb);
             this.graphEditor.Controls.Add(this.overwriteCb);
             this.graphEditor.Controls.Add(this.label1);
             this.graphEditor.Controls.Add(this.graphAreaLbl);
@@ -178,7 +198,6 @@ namespace IGI_GraphEditor
             this.graphEditor.Controls.Add(this.nodeCriteriaLbl);
             this.graphEditor.Controls.Add(this.nodeIdLbl);
             this.graphEditor.Controls.Add(this.graphIdLbl);
-            this.graphEditor.Controls.Add(this.graphIdTxt);
             this.graphEditor.Controls.Add(this.graphMaxNodesTxt);
             this.graphEditor.Controls.Add(this.graphTotalNodesTxt);
             this.graphEditor.Controls.Add(this.resetLevelBtn);
@@ -197,9 +216,9 @@ namespace IGI_GraphEditor
             // 
             // maxNodesLbl
             // 
-            this.maxNodesLbl.Font = new System.Drawing.Font("Century Gothic", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.maxNodesLbl.Font = new System.Drawing.Font("Century Gothic", 11F);
             this.maxNodesLbl.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.maxNodesLbl.Location = new System.Drawing.Point(476, 41);
+            this.maxNodesLbl.Location = new System.Drawing.Point(476, 37);
             this.maxNodesLbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.maxNodesLbl.Name = "maxNodesLbl";
             this.maxNodesLbl.Size = new System.Drawing.Size(134, 33);
@@ -213,7 +232,7 @@ namespace IGI_GraphEditor
             this.statusLbl.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.statusLbl.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.statusLbl.ForeColor = System.Drawing.Color.SkyBlue;
-            this.statusLbl.Location = new System.Drawing.Point(331, 553);
+            this.statusLbl.Location = new System.Drawing.Point(358, 108);
             this.statusLbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.statusLbl.Name = "statusLbl";
             this.statusLbl.Size = new System.Drawing.Size(68, 25);
@@ -223,9 +242,9 @@ namespace IGI_GraphEditor
             // 
             // graphTotalNodesLbl
             // 
-            this.graphTotalNodesLbl.Font = new System.Drawing.Font("Century Gothic", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.graphTotalNodesLbl.Font = new System.Drawing.Font("Century Gothic", 11F);
             this.graphTotalNodesLbl.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.graphTotalNodesLbl.Location = new System.Drawing.Point(754, 41);
+            this.graphTotalNodesLbl.Location = new System.Drawing.Point(754, 37);
             this.graphTotalNodesLbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.graphTotalNodesLbl.Name = "graphTotalNodesLbl";
             this.graphTotalNodesLbl.Size = new System.Drawing.Size(134, 33);
@@ -245,7 +264,7 @@ namespace IGI_GraphEditor
             "NODECRITERIA_STAIR",
             "NODECRITERIA_VIEW",
             "NODECRITERIA_DOOR"});
-            this.nodeCriteriaDD.Location = new System.Drawing.Point(931, 163);
+            this.nodeCriteriaDD.Location = new System.Drawing.Point(912, 163);
             this.nodeCriteriaDD.Name = "nodeCriteriaDD";
             this.nodeCriteriaDD.Size = new System.Drawing.Size(200, 29);
             this.nodeCriteriaDD.TabIndex = 112;
@@ -270,7 +289,7 @@ namespace IGI_GraphEditor
             this.playerCurrPosCb.AutoSize = true;
             this.playerCurrPosCb.Font = new System.Drawing.Font("Century Gothic", 9F);
             this.playerCurrPosCb.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.playerCurrPosCb.Location = new System.Drawing.Point(294, 201);
+            this.playerCurrPosCb.Location = new System.Drawing.Point(275, 201);
             this.playerCurrPosCb.Margin = new System.Windows.Forms.Padding(4);
             this.playerCurrPosCb.Name = "playerCurrPosCb";
             this.playerCurrPosCb.Size = new System.Drawing.Size(105, 24);
@@ -293,19 +312,6 @@ namespace IGI_GraphEditor
             this.nodeCurrPosCb.UseVisualStyleBackColor = true;
             this.nodeCurrPosCb.CheckedChanged += new System.EventHandler(this.nodeCurrPosCb_CheckedChanged);
             // 
-            // enableLogsCb
-            // 
-            this.enableLogsCb.AutoSize = true;
-            this.enableLogsCb.Font = new System.Drawing.Font("Century Gothic", 9F);
-            this.enableLogsCb.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.enableLogsCb.Location = new System.Drawing.Point(281, 448);
-            this.enableLogsCb.Margin = new System.Windows.Forms.Padding(4);
-            this.enableLogsCb.Name = "enableLogsCb";
-            this.enableLogsCb.Size = new System.Drawing.Size(118, 24);
-            this.enableLogsCb.TabIndex = 108;
-            this.enableLogsCb.Text = "Enable Logs";
-            this.enableLogsCb.UseVisualStyleBackColor = true;
-            // 
             // overwriteCb
             // 
             this.overwriteCb.AutoSize = true;
@@ -323,7 +329,7 @@ namespace IGI_GraphEditor
             // 
             this.label1.Font = new System.Drawing.Font("Century Gothic", 11F);
             this.label1.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.label1.Location = new System.Drawing.Point(242, 161);
+            this.label1.Location = new System.Drawing.Point(223, 161);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(44, 33);
@@ -337,7 +343,7 @@ namespace IGI_GraphEditor
             this.graphAreaLbl.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.graphAreaLbl.Font = new System.Drawing.Font("Century Gothic", 11F);
             this.graphAreaLbl.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.graphAreaLbl.Location = new System.Drawing.Point(255, 39);
+            this.graphAreaLbl.Location = new System.Drawing.Point(188, 37);
             this.graphAreaLbl.Margin = new System.Windows.Forms.Padding(4);
             this.graphAreaLbl.Name = "graphAreaLbl";
             this.graphAreaLbl.ReadOnly = true;
@@ -350,7 +356,7 @@ namespace IGI_GraphEditor
             this.nodeZTxt.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.nodeZTxt.Font = new System.Drawing.Font("Century Gothic", 11F);
             this.nodeZTxt.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.nodeZTxt.Location = new System.Drawing.Point(686, 163);
+            this.nodeZTxt.Location = new System.Drawing.Point(667, 163);
             this.nodeZTxt.Margin = new System.Windows.Forms.Padding(4);
             this.nodeZTxt.Name = "nodeZTxt";
             this.nodeZTxt.Size = new System.Drawing.Size(120, 30);
@@ -361,7 +367,7 @@ namespace IGI_GraphEditor
             // 
             this.nodeZLbl.Font = new System.Drawing.Font("Century Gothic", 11F);
             this.nodeZLbl.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.nodeZLbl.Location = new System.Drawing.Point(634, 160);
+            this.nodeZLbl.Location = new System.Drawing.Point(615, 160);
             this.nodeZLbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.nodeZLbl.Name = "nodeZLbl";
             this.nodeZLbl.Size = new System.Drawing.Size(44, 33);
@@ -375,7 +381,7 @@ namespace IGI_GraphEditor
             this.nodeYTxt.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.nodeYTxt.Font = new System.Drawing.Font("Century Gothic", 11F);
             this.nodeYTxt.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.nodeYTxt.Location = new System.Drawing.Point(485, 163);
+            this.nodeYTxt.Location = new System.Drawing.Point(466, 163);
             this.nodeYTxt.Margin = new System.Windows.Forms.Padding(4);
             this.nodeYTxt.Name = "nodeYTxt";
             this.nodeYTxt.Size = new System.Drawing.Size(120, 30);
@@ -386,7 +392,7 @@ namespace IGI_GraphEditor
             // 
             this.nodeYLbl.Font = new System.Drawing.Font("Century Gothic", 11F);
             this.nodeYLbl.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.nodeYLbl.Location = new System.Drawing.Point(433, 160);
+            this.nodeYLbl.Location = new System.Drawing.Point(414, 160);
             this.nodeYLbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.nodeYLbl.Name = "nodeYLbl";
             this.nodeYLbl.Size = new System.Drawing.Size(44, 33);
@@ -400,7 +406,7 @@ namespace IGI_GraphEditor
             this.nodeXTxt.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.nodeXTxt.Font = new System.Drawing.Font("Century Gothic", 11F);
             this.nodeXTxt.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.nodeXTxt.Location = new System.Drawing.Point(294, 163);
+            this.nodeXTxt.Location = new System.Drawing.Point(275, 163);
             this.nodeXTxt.Margin = new System.Windows.Forms.Padding(4);
             this.nodeXTxt.Name = "nodeXTxt";
             this.nodeXTxt.Size = new System.Drawing.Size(120, 30);
@@ -411,7 +417,7 @@ namespace IGI_GraphEditor
             // 
             this.nodeXLbl.Font = new System.Drawing.Font("Century Gothic", 11F);
             this.nodeXLbl.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.nodeXLbl.Location = new System.Drawing.Point(515, 161);
+            this.nodeXLbl.Location = new System.Drawing.Point(496, 161);
             this.nodeXLbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.nodeXLbl.Name = "nodeXLbl";
             this.nodeXLbl.Size = new System.Drawing.Size(44, 33);
@@ -426,7 +432,7 @@ namespace IGI_GraphEditor
             this.nodeIdDD.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.nodeIdDD.ForeColor = System.Drawing.SystemColors.ActiveCaption;
             this.nodeIdDD.FormattingEnabled = true;
-            this.nodeIdDD.Location = new System.Drawing.Point(155, 166);
+            this.nodeIdDD.Location = new System.Drawing.Point(136, 166);
             this.nodeIdDD.Name = "nodeIdDD";
             this.nodeIdDD.Size = new System.Drawing.Size(73, 29);
             this.nodeIdDD.TabIndex = 98;
@@ -434,9 +440,9 @@ namespace IGI_GraphEditor
             // 
             // nodeCriteriaLbl
             // 
-            this.nodeCriteriaLbl.Font = new System.Drawing.Font("Century Gothic", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.nodeCriteriaLbl.Font = new System.Drawing.Font("Century Gothic", 11F);
             this.nodeCriteriaLbl.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.nodeCriteriaLbl.Location = new System.Drawing.Point(791, 163);
+            this.nodeCriteriaLbl.Location = new System.Drawing.Point(772, 163);
             this.nodeCriteriaLbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.nodeCriteriaLbl.Name = "nodeCriteriaLbl";
             this.nodeCriteriaLbl.Size = new System.Drawing.Size(143, 33);
@@ -448,10 +454,10 @@ namespace IGI_GraphEditor
             // 
             this.nodeIdLbl.Font = new System.Drawing.Font("Century Gothic", 11F);
             this.nodeIdLbl.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.nodeIdLbl.Location = new System.Drawing.Point(4, 159);
+            this.nodeIdLbl.Location = new System.Drawing.Point(13, 160);
             this.nodeIdLbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.nodeIdLbl.Name = "nodeIdLbl";
-            this.nodeIdLbl.Size = new System.Drawing.Size(143, 33);
+            this.nodeIdLbl.Size = new System.Drawing.Size(116, 33);
             this.nodeIdLbl.TabIndex = 96;
             this.nodeIdLbl.Text = "Node Id :";
             this.nodeIdLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -465,21 +471,8 @@ namespace IGI_GraphEditor
             this.graphIdLbl.Name = "graphIdLbl";
             this.graphIdLbl.Size = new System.Drawing.Size(143, 33);
             this.graphIdLbl.TabIndex = 95;
-            this.graphIdLbl.Text = "Graph Id :";
+            this.graphIdLbl.Text = "Graph Area:";
             this.graphIdLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // graphIdTxt
-            // 
-            this.graphIdTxt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(35)))), ((int)(((byte)(54)))));
-            this.graphIdTxt.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.graphIdTxt.Font = new System.Drawing.Font("Century Gothic", 11F);
-            this.graphIdTxt.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.graphIdTxt.Location = new System.Drawing.Point(164, 39);
-            this.graphIdTxt.Margin = new System.Windows.Forms.Padding(4);
-            this.graphIdTxt.Name = "graphIdTxt";
-            this.graphIdTxt.ReadOnly = true;
-            this.graphIdTxt.Size = new System.Drawing.Size(62, 30);
-            this.graphIdTxt.TabIndex = 94;
             // 
             // graphMaxNodesTxt
             // 
@@ -487,7 +480,7 @@ namespace IGI_GraphEditor
             this.graphMaxNodesTxt.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.graphMaxNodesTxt.Font = new System.Drawing.Font("Century Gothic", 11F);
             this.graphMaxNodesTxt.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.graphMaxNodesTxt.Location = new System.Drawing.Point(923, 41);
+            this.graphMaxNodesTxt.Location = new System.Drawing.Point(923, 39);
             this.graphMaxNodesTxt.Margin = new System.Windows.Forms.Padding(4);
             this.graphMaxNodesTxt.Name = "graphMaxNodesTxt";
             this.graphMaxNodesTxt.Size = new System.Drawing.Size(62, 30);
@@ -571,30 +564,100 @@ namespace IGI_GraphEditor
             this.saveNodeBtn.UseVisualStyleBackColor = false;
             this.saveNodeBtn.Click += new System.EventHandler(this.saveNodeBtn_Click);
             // 
-            // hexEditor
+            // graphHexEditor
             // 
-            this.hexEditor.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(35)))), ((int)(((byte)(54)))));
-            this.hexEditor.Controls.Add(this.graphHexFormatCb);
-            this.hexEditor.Controls.Add(this.graphHexClearDataCb);
-            this.hexEditor.Controls.Add(this.graphHexSaveBtn);
-            this.hexEditor.Controls.Add(this.graphHexNodeIdDD);
-            this.hexEditor.Controls.Add(this.graphHexMaterialTypeLbl);
-            this.hexEditor.Controls.Add(this.graphHexMaterialTypeTxt);
-            this.hexEditor.Controls.Add(this.graphHexDataTypeLbl);
-            this.hexEditor.Controls.Add(this.graphHexDataTypeTxt);
-            this.hexEditor.Controls.Add(this.graphHexNodeIdLbl);
-            this.hexEditor.Controls.Add(this.graphHexSigLbl);
-            this.hexEditor.Controls.Add(this.graphHexColorsDD);
-            this.hexEditor.Controls.Add(this.graphHexItemsDD);
-            this.hexEditor.Controls.Add(this.graphHexSigTxt);
-            this.hexEditor.Controls.Add(this.graphHexViewerTxt);
-            this.hexEditor.Location = new System.Drawing.Point(4, 30);
-            this.hexEditor.Margin = new System.Windows.Forms.Padding(4);
-            this.hexEditor.Name = "hexEditor";
-            this.hexEditor.Padding = new System.Windows.Forms.Padding(3);
-            this.hexEditor.Size = new System.Drawing.Size(1139, 581);
-            this.hexEditor.TabIndex = 1;
-            this.hexEditor.Text = "Hex Editor";
+            this.graphHexEditor.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(35)))), ((int)(((byte)(54)))));
+            this.graphHexEditor.Controls.Add(this.elementHost);
+            this.graphHexEditor.Controls.Add(this.standardHexBoxCb);
+            this.graphHexEditor.Controls.Add(this.graphHexFormatCb);
+            this.graphHexEditor.Controls.Add(this.graphHexResetDataCb);
+            this.graphHexEditor.Controls.Add(this.graphHexSaveBtn);
+            this.graphHexEditor.Controls.Add(this.graphHexNodeIdDD);
+            this.graphHexEditor.Controls.Add(this.graphHexDataLbl);
+            this.graphHexEditor.Controls.Add(this.graphHexDataTxt);
+            this.graphHexEditor.Controls.Add(this.graphHexDataTypeLbl);
+            this.graphHexEditor.Controls.Add(this.graphHexDataTypeTxt);
+            this.graphHexEditor.Controls.Add(this.graphHexNodeIdLbl);
+            this.graphHexEditor.Controls.Add(this.graphHexSigLbl);
+            this.graphHexEditor.Controls.Add(this.graphHexColorsDD);
+            this.graphHexEditor.Controls.Add(this.graphHexItemsDD);
+            this.graphHexEditor.Controls.Add(this.graphHexSigTxt);
+            this.graphHexEditor.Controls.Add(this.customHexViewerTxt);
+            this.graphHexEditor.Location = new System.Drawing.Point(4, 30);
+            this.graphHexEditor.Margin = new System.Windows.Forms.Padding(4);
+            this.graphHexEditor.Name = "graphHexEditor";
+            this.graphHexEditor.Padding = new System.Windows.Forms.Padding(3);
+            this.graphHexEditor.Size = new System.Drawing.Size(1139, 581);
+            this.graphHexEditor.TabIndex = 1;
+            this.graphHexEditor.Text = "Hex Editor";
+            // 
+            // elementHost
+            // 
+            this.elementHost.Location = new System.Drawing.Point(0, 0);
+            this.elementHost.Name = "elementHost";
+            this.elementHost.Size = new System.Drawing.Size(938, 581);
+            this.elementHost.TabIndex = 123;
+            this.elementHost.Text = "elementHost";
+            this.elementHost.Visible = false;
+            this.elementHost.Child = this.hexEditor;
+            // 
+            // standardHexBoxCb
+            // 
+            this.standardHexBoxCb.AutoSize = true;
+            this.standardHexBoxCb.Checked = true;
+            this.standardHexBoxCb.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.standardHexBoxCb.Font = new System.Drawing.Font("Century Gothic", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.standardHexBoxCb.ForeColor = System.Drawing.Color.DeepSkyBlue;
+            this.standardHexBoxCb.Location = new System.Drawing.Point(945, 518);
+            this.standardHexBoxCb.Margin = new System.Windows.Forms.Padding(4);
+            this.standardHexBoxCb.Name = "standardHexBoxCb";
+            this.standardHexBoxCb.Size = new System.Drawing.Size(163, 23);
+            this.standardHexBoxCb.TabIndex = 120;
+            this.standardHexBoxCb.Text = "Standard Hex View";
+            this.standardHexBoxCb.UseVisualStyleBackColor = true;
+            this.standardHexBoxCb.CheckedChanged += new System.EventHandler(this.standardHexBoxCb_CheckedChanged);
+            // 
+            // graphHexFormatCb
+            // 
+            this.graphHexFormatCb.AutoSize = true;
+            this.graphHexFormatCb.Font = new System.Drawing.Font("Century Gothic", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.graphHexFormatCb.ForeColor = System.Drawing.Color.DeepSkyBlue;
+            this.graphHexFormatCb.Location = new System.Drawing.Point(945, 497);
+            this.graphHexFormatCb.Margin = new System.Windows.Forms.Padding(4);
+            this.graphHexFormatCb.Name = "graphHexFormatCb";
+            this.graphHexFormatCb.Size = new System.Drawing.Size(115, 23);
+            this.graphHexFormatCb.TabIndex = 120;
+            this.graphHexFormatCb.Text = "Auto Format";
+            this.graphHexFormatCb.UseVisualStyleBackColor = true;
+            this.graphHexFormatCb.CheckedChanged += new System.EventHandler(this.graphHexFormatCb_CheckedChanged);
+            // 
+            // graphHexResetDataCb
+            // 
+            this.graphHexResetDataCb.AutoSize = true;
+            this.graphHexResetDataCb.Font = new System.Drawing.Font("Century Gothic", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.graphHexResetDataCb.ForeColor = System.Drawing.Color.DeepSkyBlue;
+            this.graphHexResetDataCb.Location = new System.Drawing.Point(945, 478);
+            this.graphHexResetDataCb.Margin = new System.Windows.Forms.Padding(4);
+            this.graphHexResetDataCb.Name = "graphHexResetDataCb";
+            this.graphHexResetDataCb.Size = new System.Drawing.Size(107, 23);
+            this.graphHexResetDataCb.TabIndex = 119;
+            this.graphHexResetDataCb.Text = "Reset Data";
+            this.graphHexResetDataCb.UseVisualStyleBackColor = true;
+            this.graphHexResetDataCb.CheckedChanged += new System.EventHandler(this.graphHexResetDataCb_CheckedChanged);
+            // 
+            // graphHexSaveBtn
+            // 
+            this.graphHexSaveBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.graphHexSaveBtn.Font = new System.Drawing.Font("Century Gothic", 10.2F);
+            this.graphHexSaveBtn.ForeColor = System.Drawing.Color.SpringGreen;
+            this.graphHexSaveBtn.Location = new System.Drawing.Point(945, 437);
+            this.graphHexSaveBtn.Margin = new System.Windows.Forms.Padding(4);
+            this.graphHexSaveBtn.Name = "graphHexSaveBtn";
+            this.graphHexSaveBtn.Size = new System.Drawing.Size(188, 33);
+            this.graphHexSaveBtn.TabIndex = 118;
+            this.graphHexSaveBtn.Text = "Save File";
+            this.graphHexSaveBtn.UseVisualStyleBackColor = true;
+            this.graphHexSaveBtn.Click += new System.EventHandler(this.graphHexSaveBtn_Click);
             // 
             // graphHexNodeIdDD
             // 
@@ -609,30 +672,30 @@ namespace IGI_GraphEditor
             this.graphHexNodeIdDD.TabIndex = 117;
             this.graphHexNodeIdDD.SelectedIndexChanged += new System.EventHandler(this.graphHexNodeIdDD_SelectedIndexChanged);
             // 
-            // graphHexMaterialTypeLbl
+            // graphHexDataLbl
             // 
-            this.graphHexMaterialTypeLbl.Font = new System.Drawing.Font("Century Gothic", 11F);
-            this.graphHexMaterialTypeLbl.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.graphHexMaterialTypeLbl.Location = new System.Drawing.Point(945, 350);
-            this.graphHexMaterialTypeLbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.graphHexMaterialTypeLbl.Name = "graphHexMaterialTypeLbl";
-            this.graphHexMaterialTypeLbl.Size = new System.Drawing.Size(189, 33);
-            this.graphHexMaterialTypeLbl.TabIndex = 116;
-            this.graphHexMaterialTypeLbl.Text = "Material Type";
-            this.graphHexMaterialTypeLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.graphHexDataLbl.Font = new System.Drawing.Font("Century Gothic", 11F);
+            this.graphHexDataLbl.ForeColor = System.Drawing.Color.DeepSkyBlue;
+            this.graphHexDataLbl.Location = new System.Drawing.Point(945, 350);
+            this.graphHexDataLbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.graphHexDataLbl.Name = "graphHexDataLbl";
+            this.graphHexDataLbl.Size = new System.Drawing.Size(189, 33);
+            this.graphHexDataLbl.TabIndex = 116;
+            this.graphHexDataLbl.Text = "Graph Data";
+            this.graphHexDataLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // graphHexMaterialTypeTxt
+            // graphHexDataTxt
             // 
-            this.graphHexMaterialTypeTxt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(35)))), ((int)(((byte)(54)))));
-            this.graphHexMaterialTypeTxt.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.graphHexMaterialTypeTxt.Font = new System.Drawing.Font("Century Gothic", 11F);
-            this.graphHexMaterialTypeTxt.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.graphHexMaterialTypeTxt.Location = new System.Drawing.Point(945, 387);
-            this.graphHexMaterialTypeTxt.Margin = new System.Windows.Forms.Padding(4);
-            this.graphHexMaterialTypeTxt.Name = "graphHexMaterialTypeTxt";
-            this.graphHexMaterialTypeTxt.ReadOnly = true;
-            this.graphHexMaterialTypeTxt.Size = new System.Drawing.Size(189, 30);
-            this.graphHexMaterialTypeTxt.TabIndex = 115;
+            this.graphHexDataTxt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(35)))), ((int)(((byte)(54)))));
+            this.graphHexDataTxt.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.graphHexDataTxt.Font = new System.Drawing.Font("Century Gothic", 11F);
+            this.graphHexDataTxt.ForeColor = System.Drawing.Color.DeepSkyBlue;
+            this.graphHexDataTxt.Location = new System.Drawing.Point(945, 387);
+            this.graphHexDataTxt.Margin = new System.Windows.Forms.Padding(4);
+            this.graphHexDataTxt.Name = "graphHexDataTxt";
+            this.graphHexDataTxt.ReadOnly = true;
+            this.graphHexDataTxt.Size = new System.Drawing.Size(189, 30);
+            this.graphHexDataTxt.TabIndex = 115;
             // 
             // graphHexDataTypeLbl
             // 
@@ -748,22 +811,23 @@ namespace IGI_GraphEditor
             this.graphHexSigTxt.Size = new System.Drawing.Size(189, 30);
             this.graphHexSigTxt.TabIndex = 56;
             // 
-            // graphHexViewerTxt
+            // customHexViewerTxt
             // 
-            this.graphHexViewerTxt.AutoWordSelection = true;
-            this.graphHexViewerTxt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(35)))), ((int)(((byte)(54)))));
-            this.graphHexViewerTxt.ForeColor = System.Drawing.Color.White;
-            this.graphHexViewerTxt.Location = new System.Drawing.Point(3, 0);
-            this.graphHexViewerTxt.Name = "graphHexViewerTxt";
-            this.graphHexViewerTxt.Size = new System.Drawing.Size(936, 581);
-            this.graphHexViewerTxt.TabIndex = 55;
-            this.graphHexViewerTxt.Text = "GRAPH HEX VIEW";
+            this.customHexViewerTxt.AutoWordSelection = true;
+            this.customHexViewerTxt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(34)))), ((int)(((byte)(35)))), ((int)(((byte)(54)))));
+            this.customHexViewerTxt.ForeColor = System.Drawing.Color.White;
+            this.customHexViewerTxt.Location = new System.Drawing.Point(3, 0);
+            this.customHexViewerTxt.Name = "customHexViewerTxt";
+            this.customHexViewerTxt.Size = new System.Drawing.Size(936, 581);
+            this.customHexViewerTxt.TabIndex = 55;
+            this.customHexViewerTxt.Text = "GRAPH HEX VIEW";
+            this.customHexViewerTxt.MouseUp += new System.Windows.Forms.MouseEventHandler(this.customHexViewerTxt_MouseUp);
             // 
             // levelLbl
             // 
             this.levelLbl.Font = new System.Drawing.Font("Century Gothic", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.levelLbl.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.levelLbl.Location = new System.Drawing.Point(758, 32);
+            this.levelLbl.Location = new System.Drawing.Point(919, 68);
             this.levelLbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.levelLbl.Name = "levelLbl";
             this.levelLbl.Size = new System.Drawing.Size(103, 25);
@@ -796,6 +860,20 @@ namespace IGI_GraphEditor
             this.aboutBtn.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.aboutBtn.Click += new System.EventHandler(this.aboutBtn_Click);
             // 
+            // enableLogsCb
+            // 
+            this.enableLogsCb.AutoSize = true;
+            this.enableLogsCb.Font = new System.Drawing.Font("Century Gothic", 9F);
+            this.enableLogsCb.ForeColor = System.Drawing.Color.DeepSkyBlue;
+            this.enableLogsCb.Location = new System.Drawing.Point(1029, 92);
+            this.enableLogsCb.Margin = new System.Windows.Forms.Padding(4);
+            this.enableLogsCb.Name = "enableLogsCb";
+            this.enableLogsCb.Size = new System.Drawing.Size(118, 24);
+            this.enableLogsCb.TabIndex = 108;
+            this.enableLogsCb.Text = "Enable Logs";
+            this.enableLogsCb.UseVisualStyleBackColor = true;
+            this.enableLogsCb.CheckedChanged += new System.EventHandler(this.enableLogsCb_CheckedChanged);
+            // 
             // minimizeBtn
             // 
             this.minimizeBtn.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
@@ -817,7 +895,7 @@ namespace IGI_GraphEditor
             this.closeBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.closeBtn.Font = new System.Drawing.Font("Century Gothic", 15F);
             this.closeBtn.ForeColor = System.Drawing.Color.Tomato;
-            this.closeBtn.Location = new System.Drawing.Point(1090, 18);
+            this.closeBtn.Location = new System.Drawing.Point(1090, 16);
             this.closeBtn.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.closeBtn.Name = "closeBtn";
             this.closeBtn.Size = new System.Drawing.Size(52, 46);
@@ -832,51 +910,12 @@ namespace IGI_GraphEditor
             this.title_lbl.BackColor = System.Drawing.Color.Transparent;
             this.title_lbl.Font = new System.Drawing.Font("Harrington", 25F, System.Drawing.FontStyle.Bold);
             this.title_lbl.ForeColor = System.Drawing.Color.SkyBlue;
-            this.title_lbl.Location = new System.Drawing.Point(183, 9);
+            this.title_lbl.Location = new System.Drawing.Point(269, 9);
             this.title_lbl.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.title_lbl.Name = "title_lbl";
             this.title_lbl.Size = new System.Drawing.Size(514, 50);
             this.title_lbl.TabIndex = 2;
             this.title_lbl.Text = "Project I.G.I Graph Editor";
-            // 
-            // graphHexFormatCb
-            // 
-            this.graphHexFormatCb.AutoSize = true;
-            this.graphHexFormatCb.Font = new System.Drawing.Font("Century Gothic", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.graphHexFormatCb.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.graphHexFormatCb.Location = new System.Drawing.Point(945, 497);
-            this.graphHexFormatCb.Margin = new System.Windows.Forms.Padding(4);
-            this.graphHexFormatCb.Name = "graphHexFormatCb";
-            this.graphHexFormatCb.Size = new System.Drawing.Size(115, 23);
-            this.graphHexFormatCb.TabIndex = 120;
-            this.graphHexFormatCb.Text = "Auto Format";
-            this.graphHexFormatCb.UseVisualStyleBackColor = true;
-            // 
-            // graphHexClearDataCb
-            // 
-            this.graphHexClearDataCb.AutoSize = true;
-            this.graphHexClearDataCb.Font = new System.Drawing.Font("Century Gothic", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.graphHexClearDataCb.ForeColor = System.Drawing.Color.DeepSkyBlue;
-            this.graphHexClearDataCb.Location = new System.Drawing.Point(945, 478);
-            this.graphHexClearDataCb.Margin = new System.Windows.Forms.Padding(4);
-            this.graphHexClearDataCb.Name = "graphHexClearDataCb";
-            this.graphHexClearDataCb.Size = new System.Drawing.Size(107, 23);
-            this.graphHexClearDataCb.TabIndex = 119;
-            this.graphHexClearDataCb.Text = "Clear Data";
-            this.graphHexClearDataCb.UseVisualStyleBackColor = true;
-            // 
-            // graphHexSaveBtn
-            // 
-            this.graphHexSaveBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.graphHexSaveBtn.Font = new System.Drawing.Font("Century Gothic", 10.2F);
-            this.graphHexSaveBtn.ForeColor = System.Drawing.Color.SpringGreen;
-            this.graphHexSaveBtn.Location = new System.Drawing.Point(945, 437);
-            this.graphHexSaveBtn.Margin = new System.Windows.Forms.Padding(4);
-            this.graphHexSaveBtn.Name = "graphHexSaveBtn";
-            this.graphHexSaveBtn.Size = new System.Drawing.Size(188, 33);
-            this.graphHexSaveBtn.TabIndex = 118;
-            this.graphHexSaveBtn.Text = "Save File";
-            this.graphHexSaveBtn.UseVisualStyleBackColor = true;
             // 
             // IGIGraphEditorUI
             // 
@@ -893,8 +932,8 @@ namespace IGI_GraphEditor
             this.editorTabs.ResumeLayout(false);
             this.graphEditor.ResumeLayout(false);
             this.graphEditor.PerformLayout();
-            this.hexEditor.ResumeLayout(false);
-            this.hexEditor.PerformLayout();
+            this.graphHexEditor.ResumeLayout(false);
+            this.graphHexEditor.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -930,18 +969,17 @@ namespace IGI_GraphEditor
         private System.Windows.Forms.Label nodeCriteriaLbl;
         private System.Windows.Forms.Label nodeIdLbl;
         private System.Windows.Forms.Label graphIdLbl;
-        private System.Windows.Forms.TextBox graphIdTxt;
         private System.Windows.Forms.TextBox graphMaxNodesTxt;
         private System.Windows.Forms.TextBox graphTotalNodesTxt;
         private System.Windows.Forms.Button resetLevelBtn;
         private System.Windows.Forms.Button resetGraphBtn;
         private System.Windows.Forms.Button saveGraphBtn;
         private System.Windows.Forms.Button saveNodeBtn;
-        private System.Windows.Forms.TabPage hexEditor;
+        private System.Windows.Forms.TabPage graphHexEditor;
         internal System.Windows.Forms.Button setOutputPathBtn;
         internal System.Windows.Forms.Label statusLbl;
         internal System.Windows.Forms.Button browseFile;
-        private System.Windows.Forms.RichTextBox graphHexViewerTxt;
+        private System.Windows.Forms.RichTextBox customHexViewerTxt;
         private System.Windows.Forms.TextBox graphHexSigTxt;
         private System.Windows.Forms.ComboBox graphHexItemsDD;
         private System.Windows.Forms.Label graphHexSigLbl;
@@ -950,11 +988,15 @@ namespace IGI_GraphEditor
         private System.Windows.Forms.ComboBox graphHexColorsDD;
         private System.Windows.Forms.ComboBox graphHexNodeIdDD;
         private System.Windows.Forms.Label graphHexNodeIdLbl;
-        private System.Windows.Forms.Label graphHexMaterialTypeLbl;
-        private System.Windows.Forms.TextBox graphHexMaterialTypeTxt;
+        private System.Windows.Forms.Label graphHexDataLbl;
+        private System.Windows.Forms.TextBox graphHexDataTxt;
         private System.Windows.Forms.CheckBox graphHexFormatCb;
-        private System.Windows.Forms.CheckBox graphHexClearDataCb;
+        private System.Windows.Forms.CheckBox graphHexResetDataCb;
         private System.Windows.Forms.Button graphHexSaveBtn;
+        private System.Windows.Forms.Integration.ElementHost elementHost;
+        private WpfHexaEditor.HexEditor hexEditor;
+        private System.Windows.Forms.CheckBox standardHexBoxCb;
+        private System.Windows.Forms.CheckBox standaloneCb;
     }
 }
 

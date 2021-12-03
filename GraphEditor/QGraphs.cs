@@ -53,19 +53,22 @@ namespace IGI_GraphEditor
             string item;
             string signature;
             string datatype;
+            int datasize;
 
             public GraphDat() { }
 
-            public GraphDat(string item, string signature, string datatype)
+            public GraphDat(string item, string signature, string datatype,int datasize)
             {
                 this.Item = item;
                 this.Signature = signature;
                 this.Datatype = datatype;
+                this.datasize = datasize;
             }
 
             public string Item { get => item; set => item = value; }
             public string Signature { get => signature; set => signature = value; }
             public string Datatype { get => datatype; set => datatype = value; }
+            public int Datasize { get => datasize; set => datasize = value; }
         }
 
         public class QTaskGraph
@@ -89,16 +92,16 @@ namespace IGI_GraphEditor
 
         internal static void InitGraphDatList()
         {
-            graphDatList.Add(new GraphDat("Max Nodes", "04 E6 3A 0D", "Integer"));
-            graphDatList.Add(new GraphDat("Node Id", "04 CE 35 07", "Integer"));
-            graphDatList.Add(new GraphDat("Node Position", "04 95 42 1D", "Real64x3"));
-            graphDatList.Add(new GraphDat("Node Gamma", "04 9C 7E 0F", "Single"));
-            graphDatList.Add(new GraphDat("Node Radius", "04 23 30 14", "Single"));
-            graphDatList.Add(new GraphDat("Node Material", "04 29 B6 1B", "Integer"));
-            graphDatList.Add(new GraphDat("Node Criteria", "04 E5 D3 1B", "Stringx18"));
-            graphDatList.Add(new GraphDat("Graph Edge1", "04 4A 10 09", "Integer"));
-            graphDatList.Add(new GraphDat("Graph Edge2", "04 F6 18 09", "Integer"));
-            graphDatList.Add(new GraphDat("Graph EdgeType", "04 23 A9 0D", "Integer"));
+            graphDatList.Add(new GraphDat("Max Nodes", "04 E6 3A 0D", "Integer",2));
+            graphDatList.Add(new GraphDat("Node Id", "04 CE 35 07", "Integer",2));
+            graphDatList.Add(new GraphDat("Node Position", "04 95 42 1D", "Real64x3",24));
+            graphDatList.Add(new GraphDat("Node Gamma", "04 9C 7E 0F", "Single",4));
+            graphDatList.Add(new GraphDat("Node Radius", "04 23 30 14", "Single", 4));
+            graphDatList.Add(new GraphDat("Node Material", "04 29 B6 1B", "Integer",1));
+            graphDatList.Add(new GraphDat("Node Criteria", "04 E5 D3 1B", "Stringx18",18));
+            graphDatList.Add(new GraphDat("Graph Edge1", "04 4A 10 09", "Integer",2));
+            graphDatList.Add(new GraphDat("Graph Edge2", "04 F6 18 09", "Integer",2));
+            graphDatList.Add(new GraphDat("Graph EdgeType", "04 23 A9 0D", "Integer",1));
         }
 
         internal static GraphDat GetGraphDat(int index)
@@ -412,12 +415,12 @@ namespace IGI_GraphEditor
         internal static string GetGraphArea(int graphId)
         {
 
-            QUtils.graphFile = QUtils.qGraphsPath + @"\Areas\" + "graph_area_level" + QUtils.gGameLevel + ".txt";
+            QUtils.graphAreaFile = QUtils.qGraphsPath + @"\Areas\" + "graph_area_level" + QUtils.gGameLevel + ".txt";
             //QUtils.ShowInfo("graphFile: " + graphFile);
-            QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Level: " + QUtils.gGameLevel + " graphId: " + graphId + " graphFile: '" + graphFile + "'");
-            if (!System.IO.File.Exists(graphFile)) { return "Area Not Available."; }
+            QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Level: " + QUtils.gGameLevel + " graphId: " + graphId + " graphFile: '" + graphAreaFile + "'");
+            if (!System.IO.File.Exists(graphAreaFile)) { return "Area Not Available."; }
 
-            if (QUtils.graphAreas.Count == 0) QUtils.graphAreas = GetGraphAreasList(graphFile);
+            if (QUtils.graphAreas.Count == 0) QUtils.graphAreas = GetGraphAreasList(graphAreaFile);
 
             foreach (var graph in QUtils.graphAreas)
             {

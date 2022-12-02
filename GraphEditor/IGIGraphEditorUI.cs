@@ -5,10 +5,11 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Windows.Forms;
 using WpfHexaEditor.Core;
+using WpfHexaEditor.Core.EventArguments;
 using Media = System.Windows.Media;
 
 namespace IGI_GraphEditor
@@ -19,7 +20,7 @@ namespace IGI_GraphEditor
         int graphId = 0, nodeId = 0;
         GraphNode graphNode;
         Real64 graphPos;
-        private string graphHexBytes;
+        private string graphHexBytes, graphDataTmp;
 
         //Main-Start - Ctr.
         public IGIGraphEditorUI()
@@ -37,6 +38,7 @@ namespace IGI_GraphEditor
 
                 //Disable Editor on Load.
                 editorTabs.Enabled = false;
+                versionLbl.Text = "Version: " + QUtils.appVersion;
 
                 //Parse config on AppStart.
                 QUtils.AppInit();
@@ -52,9 +54,6 @@ namespace IGI_GraphEditor
                 //Settings after read config.
                 standaloneCb.Checked = QUtils.standalone;
                 enableLogsCb.Checked = QUtils.logEnabled;
-                standardHexBoxCb.Checked = QUtils.standardHex;
-                if (standaloneCb.Checked) resetLevelBtn.Enabled = false;
-
 
                 //Initialize app data for QEditor.
                 if (!QUtils.gamePathSet) QUtils.AppInit();
@@ -112,20 +111,28 @@ namespace IGI_GraphEditor
 
                 if (levelContinue)
                 {
-                    graphPos = QGraphs.GetGraphPosition(graphId);
-                    var qTaskGraph = QGraphs.GetQTaskGraph(graphId);
+                    if (standaloneCb.Checked)
+                    {
+                        QUtils.aiGraphNodeIdStr = QGraphs.GetNodesForGraph(graphId);
+                        UpdateUIComponent(graphHexNodeIdDD, QUtils.aiGraphNodeIdStr);
+                    }
+                    else
+                    {
+                        graphPos = QGraphs.GetGraphPosition(graphId);
+                        var qTaskGraph = QGraphs.GetQTaskGraph(graphId);
 
-                    QUtils.aiGraphNodeIdStr = QGraphs.GetNodesForGraph(graphId);
-                    levelLbl.Text = "Level" + QUtils.gGameLevel.ToString();
+                        QUtils.aiGraphNodeIdStr = QGraphs.GetNodesForGraph(graphId);
+                        levelLbl.Text = "Level" + QUtils.gGameLevel.ToString();
 
-                    string graphArea = QGraphs.GetGraphArea(graphId);
-                    graphAreaLbl.Text = graphArea;
-                    graphTotalNodesTxt.Text = qTaskGraph.graphData.TotalNodes.ToString();
-                    graphMaxNodesTxt.Text = qTaskGraph.graphData.MaxNodes.ToString();
+                        string graphArea = QGraphs.GetGraphArea(graphId);
+                        graphAreaLbl.Text = graphArea;
+                        graphTotalNodesTxt.Text = qTaskGraph.graphData.TotalNodes.ToString();
+                        graphMaxNodesTxt.Text = qTaskGraph.graphData.MaxNodes.ToString();
+                    }
 
                     //Update Graph Nodes.
                     UpdateUIComponent(nodeIdDD, QUtils.aiGraphNodeIdStr);
-                    UpdateUIComponent(graphHexNodeIdDD, QUtils.aiGraphNodeIdStr);
+
                 }
             }
             catch (Exception ex)
@@ -144,9 +151,6 @@ namespace IGI_GraphEditor
             fileDlg.Multiselect = false;
             fileDlg.CheckFileExists = fileDlg.RestoreDirectory = fileDlg.AddExtension = true;
 
-            customHexViewerTxt.Clear();
-            customHexViewerTxt.ResetText();
-
             DialogResult resultDlg = fileDlg.ShowDialog();
             if (resultDlg == DialogResult.OK)
             {
@@ -163,7 +167,7 @@ namespace IGI_GraphEditor
                             var gameLevelStr = datFile.Substring(datFile.IndexOf("level"), 7);
                             QUtils.gGameLevel = Convert.ToInt32(Regex.Match(gameLevelStr, @"\d+").Value);
                         }
-                        else QUtils.gGameLevel = QMemory.GetCurrentLevel();
+                        else if (!standaloneCb.Checked) QUtils.gGameLevel = QMemory.GetCurrentLevel();
 
                         QUtils.inputDatPath = datFile;
                         browseFile.Text = Path.GetFileName(datFile);
@@ -212,7 +216,7 @@ namespace IGI_GraphEditor
                 "Developed by: Haseeb Mir\n" +
                 "App/Language: C# (.NET 4.0) / GUI.\n" +
                 "Tools/Language: C++17 / CMD.\n" +
-                "Application Version:  v0.4\n";
+                "Application Version: v" + QUtils.appVersion + "\n";
             QUtils.ShowInfo(infoMsg);
         }
 
@@ -482,28 +486,65 @@ namespace IGI_GraphEditor
 
         private void editorTabs_Selected(object sender, TabControlEventArgs e)
         {
-            //Hex editor selected settingx.
+            //GHex editor selected settingx.
             if (e.TabPage.Name == "graphHexEditor" && QUtils.graphFileSelected)
             {
-                if (standardHexBoxCb.Checked)
-                {
-                    elementHost.Visible = true;
-                    customHexViewerTxt.Visible = false;
-                    hexEditor.ZoomScale = 1.3f;
-                    hexEditor.Background = new Media.SolidColorBrush(Media.Color.FromArgb(0x1, 0x34, 0x35, 0x54));
-                    //hexEditor.Background = Media.Brushes.Fuchsia;
-                    hexEditor.Foreground = hexEditor.ForegroundSecondColor = Media.Brushes.White;
-                    hexEditor.ForegroundOffSetHeaderColor = hexEditor.ForegroundHighLightOffSetHeaderColor = Media.Brushes.ForestGreen;
-                    graphHexColorsDD.SelectedIndex = graphHexColorsDD.Items.Count - 2;
-                    hexEditor.ShowByteToolTip = true;
-                    hexEditor.AllowAutoHighLightSelectionByte = false;
-                    //hexEditor.BytePerLine = 8;
-                    hexEditor.ByteGrouping = ByteSpacerGroup.EightByte;
-                    hexEditor.ByteSpacerVisualStyle = ByteSpacerVisual.Dash;
-                    hexEditor.ByteModifiedColor = Media.Brushes.SaddleBrown;
-                    hexEditor.TblEndLineColor = Media.Brushes.Red;
-                }
+                elementHost.Visible = true;
+                hexEditor.ZoomScale = 1.3f;
+                hexEditor.Background = new Media.SolidColorBrush(Media.Color.FromArgb(0x1, 0x34, 0x35, 0x54));
+                //hexEditor.Background = Media.Brushes.Fuchsia;
+                hexEditor.Foreground = hexEditor.ForegroundSecondColor = Media.Brushes.White;
+                hexEditor.ForegroundOffSetHeaderColor = hexEditor.ForegroundHighLightOffSetHeaderColor = Media.Brushes.ForestGreen;
+                graphHexColorsDD.SelectedIndex = graphHexColorsDD.Items.Count - 2;
+                hexEditor.ShowByteToolTip = true;
+                hexEditor.AllowAutoHighLightSelectionByte = false;
+                //hexEditor.BytePerLine = 8;
+                hexEditor.ByteGrouping = ByteSpacerGroup.EightByte;
+                hexEditor.ByteSpacerVisualStyle = ByteSpacerVisual.Dash;
+                hexEditor.ByteModifiedColor = Media.Brushes.SaddleBrown;
+                hexEditor.TblEndLineColor = Media.Brushes.Red;
+                hexEditor.ByteClick += new EventHandler<ByteEventArgs>(HexByteClick);
+                hexEditor.ReadOnlyMode = true;
             }
+        }
+
+        long bytePos = 0;
+
+        private void HexByteClick(object sender, ByteEventArgs e)
+        {
+            //var hexa = ((WpfHexaEditor.Core.Bytes)sender).HexValue;
+            bytePos = e.BytePositionInStream;
+
+            if (graphHexDataTypeTxt.Text == ("Integer"))
+            {
+                var data = BitConverter.ToUInt32(hexEditor.GetAllBytes().Skip((int)bytePos).Take(4).ToArray(), 0);
+                graphHexDataTxt.Text = data.ToString();
+            }
+            else if (graphHexDataTypeTxt.Text == ("Single"))
+            {
+                var data = BitConverter.ToSingle(hexEditor.GetAllBytes().Skip((int)bytePos).Take(4).ToArray(), 0);
+                graphHexDataTxt.Text = data.ToString();
+            }
+            else if (graphHexDataTypeTxt.Text == ("Double"))
+            {
+                var data = BitConverter.ToDouble(hexEditor.GetAllBytes().Skip((int)bytePos).Take(8).ToArray(), 0);
+                graphHexDataTxt.Text = data.ToString();
+            }
+            else if (graphHexDataTypeTxt.Text == ("Real64x3"))
+            {
+                var posX = BitConverter.ToDouble(hexEditor.GetAllBytes().Skip((int)bytePos).Take(8).ToArray(), 0);
+                var posY = BitConverter.ToDouble(hexEditor.GetAllBytes().Skip((int)bytePos + 8).Take(8).ToArray(), 0);
+                var posZ = BitConverter.ToDouble(hexEditor.GetAllBytes().Skip((int)bytePos + 16).Take(8).ToArray(), 0);
+                graphHexDataTxt.Text = posX.ToString("0.0000") + "," + posY.ToString("0.0000") + "," + posZ.ToString("0.0000");
+            }
+            else if (graphHexDataTypeTxt.Text == ("Stringx18"))
+            {
+                var data = Encoding.UTF8.GetString(hexEditor.GetAllBytes().Skip((int)bytePos).Take(18).ToArray());
+                graphHexDataTxt.Text = data;
+            }
+            else
+                graphHexDataTxt.Text = hexEditor.GetByte(bytePos).singleByte.ToString();
+            graphDataTmp = graphHexDataTxt.Text;
         }
 
         private void LoadHexEditorViewer()
@@ -512,37 +553,17 @@ namespace IGI_GraphEditor
             string customHexView = null;
             try
             {
-                if (!String.IsNullOrEmpty(QUtils.gameGraphsPath))
+                if (!String.IsNullOrEmpty(QUtils.inputDatPath))
                 {
-                    var graphFileData = File.ReadAllBytes(QUtils.gameGraphsPath);
+                    var graphFileData = File.ReadAllBytes(QUtils.inputDatPath);
                     graphHexBytes = BitConverter.ToString(graphFileData).Replace("-", " ");
 
                     //Load data for Standard Hex viewer.
                     hexEditor.PreloadByteInEditorMode = PreloadByteInEditor.MaxScreenVisibleLineAtDataLoad;
-                    //hexEditor.ForegroundSecondColor = Media.Brushes.Blue;
-                    hexEditor.FileName = QUtils.gameGraphsPath;
-
-
-                    //Load data for Custom Hex viewer.
-                    //int bytesPerRow = 30,offset = 0;
-
-                    //for (int index = 0; index < graphHexBytes.Length;)
-                    //{
-                    //    //customHexView += offset.ToString("X8") + "\t";
-
-                    //    for (int i = 0; i < bytesPerRow; ++i)
-                    //    {
-                    //        customHexView += graphHexBytes[index] + "" + graphHexBytes[index+1] + " ";
-                    //        index += 3;
-                    //    }
-                    //    customHexView += "\n";
-                    //    offset += bytesPerRow;
-                    //}
-                    //graphHexBytes = customHexView;
-                    customHexViewerTxt.Text = graphHexBytes;
+                    hexEditor.FileName = QUtils.inputDatPath;
                 }
             }
-            catch (Exception ex) { QUtils.LogException(MethodBase.GetCurrentMethod().Name, ex); customHexViewerTxt.Text = customHexView; }
+            catch (Exception ex) { QUtils.ShowLogException(MethodBase.GetCurrentMethod().Name, ex); }
         }
 
         private void graphHexItemsDD_SelectedIndexChanged(object sender, EventArgs e)
@@ -558,10 +579,6 @@ namespace IGI_GraphEditor
                 {
                     graphHexDataTypeTxt.Text = graphDat.Datatype;
                     graphHexSigTxt.Text = graphDat.Signature;
-                    //if (standardHexBoxCb.Checked) hexEditor.Background = QUtils.WpfGetMediaBrush(color);
-                    //Formatting Signatures.
-                    //HexViewerFormat("CC DD EE FF", Color.SaddleBrown, "Arial", 12, FontStyle.Underline);
-                    //HexViewerFormat(graphDat.Signature, color, "Consolas", 12, FontStyle.Bold);
                 }
             }
             catch (Exception ex)
@@ -595,51 +612,6 @@ namespace IGI_GraphEditor
             }
         }
 
-        public void HexViewerFormatter(List<string> keywords, List<Color> colors, string fontName, int fontSize, List<FontStyle> fontStyles)
-        {
-            for (int index = 0; index < keywords.Count; index++)
-            {
-                HexViewerFormat(keywords[index], colors[index], fontName, fontSize, fontStyles[index]);
-            }
-        }
-
-        private void CustHexView_FormatBlocks(QGraphs.GraphDat graphDat, Color color, int nodeIndex, bool selectPos = true)
-        {
-            QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "GraphDat Item: '" + graphDat.Item + "' Color: " + color.ToString());
-            int startPosSig = graphHexBytes.NthIndexOf(graphDat.Signature, nodeIndex + 1);
-            int startPosData = startPosSig + 12 * 2;
-            int dataLength = 2;
-            string sigData = graphHexBytes.Substring(startPosData, dataLength);
-            CustHexView_FormatBlock(startPosSig, graphDat.Signature.Length, Color.Black, "Consolas", 12, FontStyle.Bold);
-            CustHexView_FormatBlock(startPosData, dataLength, color, "Lucida Sans", 12, FontStyle.Underline);
-            if(selectPos) customHexViewerTxt.ScrollToCaret();
-        }
-
-        // Format the selected block.
-        private void CustHexView_FormatBlock(int start, int length, Color color, string fontName, int fontSize, FontStyle fontStyle)
-        {
-            QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Block: start: " + start + " length: " + length + " color:" + color.ToString());
-
-            //int pos = graphHexViewerTxt.Text.IndexOf(target);
-            if (start < 0)
-            {
-                // Not found. Select nothing.
-                customHexViewerTxt.Select(0, 0);
-                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Block selected None");
-            }
-            else
-            {
-                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Block selecting now...");
-                // Found the text. Select it.
-                customHexViewerTxt.Select(start, length);
-                customHexViewerTxt.SelectionColor = color;
-                customHexViewerTxt.SelectionFont = new Font(fontName, fontSize, fontStyle);
-                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Block selected for CustomHexBox");
-            }
-            customHexViewerTxt.SelectionStart = start;
-            customHexViewerTxt.SelectionLength = 0;
-        }
-
         private void StdHexView_FormatBlocks(QGraphs.GraphDat graphDat, Media.SolidColorBrush color, int nodeIndex, bool selectPos = true)
         {
 
@@ -651,7 +623,7 @@ namespace IGI_GraphEditor
             //Format block for signature.
             long start = posList[nodeIndex];
             int length = 4;
-            StdHexView_FormatBlock(start, length, Media.Brushes.Black, graphDat.Item.Replace("Node ", "Node #" + nodeIndex + 1 + " "));
+            StdHexView_FormatBlock(start, length, Media.Brushes.Black, graphDat.Item.Replace("Node ", "Node #" + (nodeIndex + 1) + " "));
 
             //Format block for data.
             long dataStart = start + 8;
@@ -681,10 +653,7 @@ namespace IGI_GraphEditor
                 //Formatting Signature and data.
                 if (!String.IsNullOrEmpty(graphHexBytes))
                 {
-                    if (standardHexBoxCb.Checked)
-                        StdHexView_FormatBlocks(graphDat, QUtils.WpfGetMediaBrush(color), graphHexNodeIdDD.SelectedIndex);
-                    else
-                        CustHexView_FormatBlocks(graphDat, color, graphHexNodeIdDD.SelectedIndex);
+                    StdHexView_FormatBlocks(graphDat, QUtils.WpfGetMediaBrush(color), graphHexNodeIdDD.SelectedIndex);
                 }
                 else
                     QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Hex viewer data is null of empty.");
@@ -695,42 +664,9 @@ namespace IGI_GraphEditor
             }
         }
 
-        private void standardHexBoxCb_CheckedChanged(object sender, EventArgs e)
-        {
-            if (((CheckBox)sender).Checked)
-            {
-                elementHost.Visible = true;
-                customHexViewerTxt.Visible = false;
-                hexEditor.FileName = QUtils.gameGraphsPath;
-                QUtils.standardHex = true;
-            }
-            else
-            {
-                customHexViewerTxt.Visible = true;
-                elementHost.Visible = false;
-                hexEditor.FileName = "";
-                QUtils.standardHex = false;
-            }
-        }
-
         private void standaloneCb_CheckedChanged(object sender, EventArgs e)
         {
             resetLevelBtn.Enabled = !((CheckBox)sender).Checked;
-        }
-
-        private void customHexViewerTxt_MouseUp(object sender, MouseEventArgs e)
-        {
-            RichTextBox box = (RichTextBox)sender;
-            Point mouseLocation = new Point(e.X, e.Y);
-            box.SelectionStart = box.GetCharIndexFromPosition(mouseLocation);
-            box.SelectionLength = 0;
-            int selectionStart = customHexViewerTxt.SelectionStart;
-            int lineFromCharIndex = box.GetLineFromCharIndex(selectionStart);
-            int charIndexFromLine = box.GetFirstCharIndexFromLine(lineFromCharIndex);
-
-            var line = box.GetLineFromCharIndex(selectionStart) + 1;
-            var col = box.SelectionStart - charIndexFromLine + 1;
-            graphHexDataTxt.Text = "Line: " + line + " Col: " + col;
         }
 
         private void graphHexResetDataCb_CheckedChanged(object sender, EventArgs e)
@@ -757,10 +693,7 @@ namespace IGI_GraphEditor
                         {
                             foreach (var graphDat in QGraphs.graphDatList)
                             {
-                                if (standardHexBoxCb.Checked)
-                                    StdHexView_FormatBlocks(graphDat, RandomBrushes.PickBrush(), node, false);
-                                else
-                                    CustHexView_FormatBlocks(graphDat, QUtils.WpfGetDrawingColor(RandomBrushes.PickBrush()), node, false);
+                                StdHexView_FormatBlocks(graphDat, RandomBrushes.PickBrush(), node, false);
                             }
                         }
                         catch (Exception) { };
@@ -777,43 +710,97 @@ namespace IGI_GraphEditor
 
         private void graphHexSaveBtn_Click(object sender, EventArgs e)
         {
-            if (standardHexBoxCb.Checked)
+
+            DialogResult resultDlg = QUtils.ShowDialog("Do you want to save the changes to file?");
+            if (resultDlg == DialogResult.Yes)
             {
-                DialogResult resultDlg = QUtils.ShowDialog("Do you want to save the changes to file?");
-                if (resultDlg == DialogResult.Yes)
-                {
-                    hexEditor.SaveCurrentState(QUtils.projAppName + "_State.dat");
-                    //hexEditor.SubmitChanges();
-
-                    Application.UseWaitCursor = true;
-                    hexEditor.SubmitChanges();
-
-                    Application.UseWaitCursor = false;
-                    QUtils.ShowStatusInfo("File changes saved successfully");
-                }
+                hexEditor.SaveCurrentState(QUtils.projAppName + "_state.dat");
+                Application.UseWaitCursor = true;
+                hexEditor.SubmitChanges();
+                Application.UseWaitCursor = false;
+                QUtils.ShowStatusInfo("File changes saved successfully");
             }
         }
 
-        private void HexViewerFormat(string phrase, Color color, string fontName, int fontSize, FontStyle fontStyle)
+        private void editModeCb_CheckedChanged(object sender, EventArgs e)
         {
-            int pos = customHexViewerTxt.SelectionStart;
-            string text = customHexViewerTxt.Text;
-            int startIndex = 0;
-            do
+            if (((CheckBox)sender).Checked)
             {
-                int index = text.IndexOf(phrase, startIndex, StringComparison.CurrentCultureIgnoreCase);
-                if (index < 0) break;
-                customHexViewerTxt.SelectionStart = index;
-                customHexViewerTxt.SelectionLength = phrase.Length;
-                customHexViewerTxt.SelectionColor = color;
-                customHexViewerTxt.SelectionFont = new Font(fontName, fontSize, fontStyle);
-                startIndex = index + 1;
-            } while (true);
-
-            customHexViewerTxt.SelectionStart = pos;
-            customHexViewerTxt.SelectionLength = 0;
+                var showDlg = QUtils.ShowDialog("Do you want to enable edit mode ?");
+                if (showDlg == DialogResult.Yes)
+                    hexEditor.ReadOnlyMode = false;
+                else (((CheckBox)sender).Checked) = false;
+            }
+            else {
+                hexEditor.ReadOnlyMode = true;
+            }
         }
 
+        private void graphHexDataTxt_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void graphHexDataTxt_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                try
+                {
+                    var graphHexData = graphHexDataTxt.Text;
+                    byte[] bytes = new byte[0];
+
+                    if (graphHexDataTypeTxt.Text == ("Integer"))
+                        bytes = BitConverter.GetBytes(Convert.ToUInt32(graphHexData));
+                    else if (graphHexDataTypeTxt.Text == ("Single"))
+                        bytes = BitConverter.GetBytes(Convert.ToSingle(graphHexData));
+                    else if (graphHexDataTypeTxt.Text == ("Double"))
+                        bytes = BitConverter.GetBytes(Convert.ToDouble(graphHexData));
+                    else if (graphHexDataTypeTxt.Text == ("Real64x3"))
+                    {
+                        var strX = graphHexData.Slice(0, graphHexData.IndexOf(","));
+                        QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "String XPos: " + strX);
+                        var bytesX = BitConverter.GetBytes(Convert.ToSingle(strX));
+                        QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Bytes XPos: " + bytesX.Length);
+
+                        var strY = graphHexData.Slice(graphHexData.IndexOf(",") + 1, graphHexData.LastIndexOf(","));
+                        QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "String YPos: " + strY);
+                        var bytesY = BitConverter.GetBytes(Convert.ToDouble(strY));
+                        QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Bytes YPos: " + bytesY.Length);
+
+                        var strZ = graphHexData.Substring(graphHexData.LastIndexOf(",") + 1);
+                        QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "String ZPos: " + strZ);
+                        var bytesZ = BitConverter.GetBytes(Convert.ToSingle(strZ));
+                        QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Bytes ZPos: " + bytesZ.Length);
+
+                        if (!graphDataTmp.Contains(strX)) { bytes = bytesX; };
+                        if (!graphDataTmp.Contains(strY)) { bytes = bytesY; bytePos += 8; };
+                        if (!graphDataTmp.Contains(strZ)) { bytes = bytesZ; bytePos += 16; };
+
+                        //Write Node position X,Y,Z in Double format.
+                        //Buffer.BlockCopy(bytesX, 0, bytes, 0, bytesX.Length);
+                        //Buffer.BlockCopy(bytesY, 0, bytes, 8, bytesY.Length);
+                        //Buffer.BlockCopy(bytesZ, 0, bytes, 16, bytesZ.Length);
+
+                        //Array.Reverse(bytesX); Array.Reverse(bytesY); Array.Reverse(bytesZ);
+
+                    }
+                    else if (graphHexDataTypeTxt.Text == ("Stringx18"))
+                        bytes = Encoding.ASCII.GetBytes(graphHexDataTxt.Text);
+
+                    //Write updated bytes to Hex Editor.
+                    for (int i = 0; i < bytes.Length; ++i)
+                        hexEditor.FillWithByte(bytePos + i, 1, bytes[i]);
+                    //    hexEditor.ModifyByte(bytes[i],bytePos);
+                }
+
+                catch (Exception ex)
+                {
+                    QUtils.LogException(MethodBase.GetCurrentMethod().Name, ex);
+                }
+
+            }
+        }
     }
 
     public static class StringExtender

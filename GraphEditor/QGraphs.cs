@@ -123,7 +123,7 @@ namespace IGI_GraphEditor
         internal static List<GraphNode> ReadGraphNodeData(string graphFile)
         {
             var graphFileData = File.ReadAllBytes(graphFile);
-            List<GraphNode> graphNodeData = new List<GraphNode>();
+            var graphNodeData = new List<GraphNode>();
 
             for (int index = 0; index < graphFileData.Length; index++)
             {
@@ -154,7 +154,7 @@ namespace IGI_GraphEditor
                     int nodeCriteriaIndex = index + 88 + 1;
                     var nodeCriteriaData = graphFileData.Skip(nodeCriteriaIndex).Take(18).ToArray();
                     string nodeCriteria = Encoding.UTF8.GetString(nodeCriteriaData);
-                    nodeCriteria = nodeCriteria.IsNonASCII() ? String.Empty : nodeCriteria;
+                    nodeCriteria = nodeCriteria.IsBinary() ? String.Empty : nodeCriteria;
 
                     //Adding Graph Node data.
                     graphData.NodeId = nodeId;
@@ -204,7 +204,7 @@ namespace IGI_GraphEditor
                         int nodeCriteriaIndex = index + 88 + 1;
                         var nodeCriteriaData = graphFileData.Skip(nodeCriteriaIndex).Take(18).ToArray();
                         string nodeCriteriaType = Encoding.UTF8.GetString(nodeCriteriaData);
-                        nodeCriteriaType = nodeCriteriaType.IsNonASCII() ? String.Empty : nodeCriteriaType;
+                        nodeCriteriaType = nodeCriteriaType.IsBinary() ? String.Empty : nodeCriteriaType;
                         int nodeCriteriaTypeLen = nodeCriteriaType.Length;
                         int nodeCriteriaLen = nodeCriteria.Length;
 
@@ -256,9 +256,9 @@ namespace IGI_GraphEditor
 
                 string inputQscPath = QUtils.cfgQscPath + QUtils.gGameLevel + "\\" + QUtils.objectsQsc;
                 qscData = QUtils.LoadFile(inputQscPath);
-                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "IsNonASCII : " + qscData.IsNonASCII());
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "IsNonASCII : " + qscData.IsBinary());
 
-                qscData = qscData.IsNonASCII() ? QCryptor.Decrypt(inputQscPath) : qscData;
+                qscData = qscData.IsBinary() ? QCryptor.Decrypt(inputQscPath) : qscData;
 
                 var position = graphPos;//qTaskGraph.position;
                 QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "position : X:" + position.x + " Y: " + position.y + " Z: " + position.z);
@@ -418,7 +418,7 @@ namespace IGI_GraphEditor
             QUtils.graphAreaFile = QUtils.qGraphsPath + @"\Areas\" + "graph_area_level" + QUtils.gGameLevel + ".txt";
             //QUtils.ShowInfo("graphFile: " + graphFile);
             QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "Level: " + QUtils.gGameLevel + " graphId: " + graphId + " graphFile: '" + graphAreaFile + "'");
-            if (!System.IO.File.Exists(graphAreaFile)) { return "Area Not Available."; }
+            if (!File.Exists(graphAreaFile)) { return "Area Not Available."; }
 
             if (QUtils.graphAreas.Count == 0) QUtils.graphAreas = GetGraphAreasList(graphAreaFile);
 
@@ -431,7 +431,7 @@ namespace IGI_GraphEditor
 
         internal static Dictionary<int, string> GetGraphAreasList(string graphFile)
         {
-            var fileData = System.IO.File.ReadAllLines(graphFile);
+            var fileData = File.ReadAllLines(graphFile);
             var graphAreas = new Dictionary<int, string>();
             string areaSub = "Area : ";
 
@@ -481,9 +481,9 @@ namespace IGI_GraphEditor
                 string inputQscPath = QUtils.cfgQscPath + level + "\\" + QUtils.objectsQsc;
                 QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "called with level : " + level + " backup : " + fromBackup + " InputQsc Path '" + inputQscPath + "'");
                 string qscData = fromBackup ? QUtils.LoadFile(inputQscPath) : QUtils.LoadFile();
-                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "IsNonASCII : " + qscData.IsNonASCII());
+                QUtils.AddLog(MethodBase.GetCurrentMethod().Name, "IsBinary : " + qscData.IsBinary());
 
-                qscData = qscData.IsNonASCII() ? QCryptor.Decrypt(inputQscPath) : qscData;
+                qscData = qscData.IsBinary() ? QCryptor.Decrypt(inputQscPath) : qscData;
                 var qtaskList = ParseGraphData(qscData);
 
                 if (sorted) qtaskList = qtaskList.OrderBy(q => q.id).ToList();
@@ -578,7 +578,7 @@ namespace IGI_GraphEditor
             return result;
         }
 
-        public static bool IsNonASCII(this string str)
+        public static bool IsBinary(this string str)
         {
             return (Encoding.UTF8.GetByteCount(str) != str.Length);
         }

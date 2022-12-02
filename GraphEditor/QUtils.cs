@@ -18,14 +18,14 @@ namespace IGI_GraphEditor
         internal static int gGameLevel;
         internal static Dictionary<int, string> graphAreas = new Dictionary<int, string>();
         internal static long GAME_MAX_LEVEL = 14;
-        internal const string CAPTION_CONFIG_ERR = "Config - Error", CAPTION_FATAL_SYS_ERR = "Fatal sytem - Error", CAPTION_APP_ERR = "Application - Error", CAPTION_COMPILER_ERR = "Compiler - Error", EDITOR_LEVEL_ERR = "EDITOR ERROR";
+        internal const string appVersion = "0.0.2",CAPTION_CONFIG_ERR = "Config - Error", CAPTION_FATAL_SYS_ERR = "Fatal sytem - Error", CAPTION_APP_ERR = "Application - Error", CAPTION_COMPILER_ERR = "Compiler - Error", EDITOR_LEVEL_ERR = "EDITOR ERROR";
 
         internal static string inputDatPath;
 
         internal static bool gamePathSet = false, cfgMultiDll = false, cfgAutoInject = false;
         internal static int cfgDelayDll = 10, cfgGameLevel = 1, IGI1_MAX_LEVEL = 14, IGI2_MAX_LEVEL = 19;
         internal static string cfgQscPath, gameAbsPath, appOutPath, cfgGamePath, cfgGameName = "igi", cfgFile, cfgGameMode = "windowed", injectorFile = @"bin\igi-injector-cmd.exe";
-        internal static bool gameFound = false, logEnabled = false, gameReset = false, editorOnline = false, standalone = true, standardHex = true, graphFileSelected=false;
+        internal static bool gameFound = false, logEnabled = false, gameReset = false, editorOnline = false, standalone = true, graphFileSelected=false;
         private static string logFile, appCurrPath;
         internal static float appEditorVersion = 0.3f, viewPortDelta = 3000.0f;
 
@@ -202,7 +202,6 @@ namespace IGI_GraphEditor
                     QUtils.logEnabled = bool.Parse(qIniParser.Read("app_logs", EDITOR_SEC));
                     QUtils.gameReset = bool.Parse(qIniParser.Read("game_reset", EDITOR_SEC));
                     QUtils.standalone = bool.Parse(qIniParser.Read("standalone", EDITOR_SEC));
-                    QUtils.standardHex = bool.Parse(qIniParser.Read("standard_hex", EDITOR_SEC));
                 }
                 else
                 {
@@ -250,7 +249,6 @@ namespace IGI_GraphEditor
             qIniParser.Write("game_reset", gameReset.ToString(), EDITOR_SEC);
             qIniParser.Write("app_logs", logEnabled.ToString(), EDITOR_SEC);
             qIniParser.Write("standalone", standalone.ToString(), EDITOR_SEC);
-            qIniParser.Write("standard_hex", standardHex.ToString(), EDITOR_SEC);
 
             if (!gameFound) Environment.Exit(1);
         }

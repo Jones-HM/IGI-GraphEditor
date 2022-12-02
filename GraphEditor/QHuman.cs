@@ -25,7 +25,7 @@ namespace IGI_GraphEditor
 
             string qscData = (fromBackup) ? QUtils.LoadFile(inputQscPath) : QUtils.LoadFile();
 
-            if (qscData.IsNonASCII()) qscData = QCryptor.Decrypt(QUtils.objectsQsc);
+            if (qscData.IsBinary()) qscData = QCryptor.Decrypt(QUtils.objectsQsc);
 
             string idIndexStr = "Task_New(0";
             int idIndex = qscData.IndexOf(idIndexStr);

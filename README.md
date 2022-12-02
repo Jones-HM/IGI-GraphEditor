@@ -37,6 +37,7 @@ Hex editor Node fields.
 
 ### Credits:
 - Orwa: For _Testing_ Editor and tools.
+- Dark: For _UI/UX_ design and tools.
 
 If you encounter any issues with Editor just contact me at</br>
 
